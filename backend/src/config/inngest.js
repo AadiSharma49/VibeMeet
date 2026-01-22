@@ -1,5 +1,7 @@
 import { Inngest } from "inngest";
 import { connectDB } from "./db";
+import User from "../models/User.js";
+import { deleteStreamUser } from "../utils/stream.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "Vibe-Meet" });
@@ -26,6 +28,7 @@ const deleteUser=inngest.createFunction(
     {id:"delete-user"},
     {event:"clerk/user.deleted"},
     async({event})=>{
+        await connectDB();  
         const {id}=event.data;
         await User.deleteOne({clerkId:id});
         await deleteStreamUser(id.toString());

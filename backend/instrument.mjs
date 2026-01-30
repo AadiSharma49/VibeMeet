@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { ENV } from "./src/config/env";
+import { ENV } from "./src/config/env.js";
 
 Sentry.init({
   dsn: ENV.SENTRY_DSN,

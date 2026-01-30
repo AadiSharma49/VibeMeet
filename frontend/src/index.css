@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: rgb(10 10 10);
+  color: rgb(229 231 235);
+  overflow: hidden; /* prevents scrollbars */
+}

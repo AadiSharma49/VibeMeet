@@ -5,7 +5,7 @@ export const getStreamToken=async(req,res)=>{
         const token=generateStreamToken(req.auth().userId);
         res.status(200).json({token});
     } catch (error) { 
-        console.error("Error in getStreamToken:",error);
-        res.status(500).json({error:"Failed to generate stream token"});
+        console.log("Error in getStreamToken:",error);
+        res.status(500).json({message:"Failed to generate stream token"});
     }
 }

@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -10,14 +10,15 @@ import {
   useLocation,
   useNavigationType,
 } from "react-router";
+import { BrowserRouter } from "react-router-dom"; // ✅ FIXED
 import { Toaster } from 'react-hot-toast'
 import AuthProvider from './providers/AuthProvider.jsx'
 import * as Sentry from "@sentry/react";
 
-import{
+import {
   QueryClient,
   QueryClientProvider,
-} from '@tabler/react-query' 
+} from '@tanstack/react-query'
 
 const queryClient = new QueryClient()
 
@@ -31,7 +32,7 @@ Sentry.init({
   dsn: "https://e389fd21c030bd24d36d49c8e6003fe1@o4510648430297088.ingest.us.sentry.io/4510967510532096",
   integrations: [
     Sentry.reactRouterV7BrowserTracingIntegration({
-      useEffect: React.useEffect,
+      useEffect: useEffect, // ✅ FIXED (no React.useEffect)
       useLocation,
       useNavigationType,
       createRoutesFromChildren,
@@ -43,14 +44,14 @@ Sentry.init({
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <BrowserRouter>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-    <App />
-    <AuthProvider/>
-    <Toaster position='top-center'/>
-    </QueryClientProvider>
-  </BrowserRouter>
+          <App />
+          <AuthProvider />
+          <Toaster position='top-center' />
+        </QueryClientProvider>
+      </BrowserRouter>
     </ClerkProvider>
-  </StrictMode>,
+  </StrictMode>
 )

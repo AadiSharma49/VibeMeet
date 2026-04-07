@@ -26,7 +26,7 @@ export default function AuthPage() {
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-neutral-500 text-sm animate-pulse">
           Loading VibeMeet...
         </div>
-        <style jsx>{`
+        <style>{`
           .animation-delay-200 { animation-delay: 0.2s; }
           .animation-delay-400 { animation-delay: 0.4s; }
         `}</style>
@@ -97,7 +97,7 @@ export default function AuthPage() {
       {/* Clerk Sign In Modal */}
       {showSignIn && (
         <div 
-          className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-20 px-4 bg-black/70 backdrop-blur-md animate-fade-in overflow-y-auto custom-scrollbar cursor-pointer"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-20 px-4 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-lg animate-fade-in overflow-y-auto custom-scrollbar cursor-pointer"
           onClick={() => setShowSignIn(false)}
         >
           <div 
@@ -107,14 +107,14 @@ export default function AuthPage() {
             {/* Close Button */}
             <button
               onClick={() => setShowSignIn(false)}
-              className="absolute -top-10 sm:-top-12 right-0 w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/50 hover:bg-neutral-700/50 border border-neutral-700/30 text-neutral-400 hover:text-neutral-100 transition-all duration-200 cursor-pointer"
+              className="absolute -top-10 sm:-top-12 right-0 w-8 h-8 flex items-center justify-center rounded-full bg-neutral-800/40 hover:bg-neutral-700/40 border border-neutral-700/50 text-neutral-400 hover:text-neutral-100 transition-all duration-300 transform hover:scale-110 cursor-pointer backdrop-blur-md"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             
-            <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-neutral-800/50 shadow-2xl">
+            <div className="bg-gradient-to-br from-neutral-900/80 to-neutral-950/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-neutral-700/40 shadow-2xl hover:border-neutral-600/50 transition-all duration-500">
               <SignIn
                 appearance={{
                   elements: {
@@ -123,21 +123,21 @@ export default function AuthPage() {
                     headerTitle: "text-neutral-100 text-2xl font-bold",
                     headerSubtitle: "text-neutral-400",
                     formFieldInput:
-                      "bg-neutral-950/50 border border-neutral-800/60 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700 transition-all duration-200 cursor-text",
+                      "bg-neutral-950/60 border border-neutral-700/60 rounded-xl px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-600 focus:ring-2 focus:ring-neutral-700/50 focus:bg-neutral-950/80 transition-all duration-300 cursor-text backdrop-blur-sm",
                     formFieldLabel:
                       "text-neutral-400 text-sm font-medium mb-2",
                     formButtonPrimary:
-                      "bg-neutral-100 hover:bg-white text-neutral-950 rounded-xl py-3 font-semibold shadow-lg transition-all duration-200 transform hover:scale-[1.01] cursor-pointer",
+                      "bg-neutral-100 hover:bg-white text-neutral-950 rounded-xl py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer active:scale-95",
                     socialButtonsBlockButton:
-                      "bg-neutral-950/50 border border-neutral-800/60 hover:border-neutral-700/60 hover:bg-neutral-900/50 text-neutral-100 rounded-xl backdrop-blur-sm transition-all duration-200 cursor-pointer",
+                      "bg-neutral-950/50 border border-neutral-700/60 hover:border-neutral-600/80 hover:bg-neutral-900/70 text-neutral-100 rounded-xl backdrop-blur-sm transition-all duration-300 transform hover:scale-102 active:scale-95 cursor-pointer",
                     socialButtonsBlockButtonText:
                       "text-sm font-medium text-neutral-300",
-                    dividerLine: "bg-neutral-800/60",
+                    dividerLine: "bg-neutral-700/40",
                     dividerText: "text-neutral-600 text-xs",
                     footerActionLink:
-                      "text-neutral-400 hover:text-neutral-300 transition-colors cursor-pointer",
+                      "text-neutral-400 hover:text-neutral-300 transition-colors duration-200 cursor-pointer",
                     formFieldAction:
-                      "text-neutral-400 hover:text-neutral-300 text-sm transition-colors cursor-pointer",
+                      "text-neutral-400 hover:text-neutral-300 text-sm transition-colors duration-200 cursor-pointer",
                   },
                 }}
               />
@@ -180,17 +180,17 @@ export default function AuthPage() {
                 onClick={() => setShowSignIn(true)}
                 className="group relative w-full overflow-hidden rounded-2xl cursor-pointer"
               >
-                {/* Animated Border */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-neutral-700 via-neutral-600 to-neutral-700 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-500"></div>
+                {/* Animated Gradient Border */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-neutral-600 via-neutral-500 to-neutral-600 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-500"></div>
                 
                 {/* Button Content */}
-                <div className="relative bg-neutral-100 hover:bg-white rounded-2xl px-8 py-5 transition-all duration-300 transform group-hover:scale-[1.02]">
+                <div className="relative bg-gradient-to-r from-neutral-100 to-neutral-50 hover:from-white hover:to-neutral-100 rounded-2xl px-8 py-5 transition-all duration-300 transform group-hover:scale-105 active:scale-95">
                   <div className="flex items-center justify-center gap-3">
                     <span className="text-neutral-950 font-bold text-lg sm:text-xl">
                       Get Started
                     </span>
                     <svg 
-                      className="w-6 h-6 text-neutral-950 transition-transform group-hover:translate-x-2 duration-300" 
+                      className="w-6 h-6 text-neutral-950 transition-all group-hover:translate-x-2 duration-300" 
                       fill="none" 
                       viewBox="0 0 24 24" 
                       stroke="currentColor"
@@ -200,64 +200,64 @@ export default function AuthPage() {
                   </div>
                   
                   {/* Shimmer Effect */}
-                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-2xl"></div>
                 </div>
               </button>
 
               <p className="text-xs sm:text-sm text-center text-neutral-600 flex items-center justify-center gap-2">
                 <span className="w-1.5 h-1.5 bg-neutral-600 rounded-full animate-pulse"></span>
-                Join thousands of teams already using VibeMeet
+                Be among the first to experience the future of collaboration
               </p>
             </div>
 
             {/* Features Grid */}
             <div className="mt-12 sm:mt-16 space-y-4 animate-fade-in animation-delay-800">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="group flex items-center gap-3 p-4 rounded-xl bg-neutral-900/40 border border-neutral-800/40 hover:border-neutral-700/60 hover:bg-neutral-900/60 transition-all duration-300 cursor-default">
-                  <div className="w-10 h-10 rounded-lg bg-neutral-800/50 flex items-center justify-center flex-shrink-0 border border-neutral-700/30 group-hover:border-neutral-600/50 transition-colors">
-                    <svg className="w-5 h-5 text-neutral-400 group-hover:text-neutral-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="group flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-neutral-900/60 to-neutral-950/60 border border-neutral-700/40 hover:border-neutral-600/60 hover:from-neutral-900/80 hover:to-neutral-900/70 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-neutral-950/50 cursor-default backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-800/60 flex items-center justify-center flex-shrink-0 border border-neutral-700/40 group-hover:border-neutral-600/60 transition-all duration-300 backdrop-blur-sm">
+                    <svg className="w-5 h-5 text-neutral-300 group-hover:text-neutral-100 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-neutral-200 font-semibold text-sm">Lightning Fast</h3>
-                    <p className="text-neutral-600 text-xs">Real-time collaboration</p>
+                    <h3 className="text-neutral-200 font-semibold text-sm group-hover:text-neutral-100 transition-colors">Lightning Fast</h3>
+                    <p className="text-neutral-500 text-xs group-hover:text-neutral-400 transition-colors">Real-time collaboration</p>
                   </div>
                 </div>
 
-                <div className="group flex items-center gap-3 p-4 rounded-xl bg-neutral-900/40 border border-neutral-800/40 hover:border-neutral-700/60 hover:bg-neutral-900/60 transition-all duration-300 cursor-default">
-                  <div className="w-10 h-10 rounded-lg bg-neutral-800/50 flex items-center justify-center flex-shrink-0 border border-neutral-700/30 group-hover:border-neutral-600/50 transition-colors">
-                    <svg className="w-5 h-5 text-neutral-400 group-hover:text-neutral-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="group flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-neutral-900/60 to-neutral-950/60 border border-neutral-700/40 hover:border-neutral-600/60 hover:from-neutral-900/80 hover:to-neutral-900/70 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-neutral-950/50 cursor-default backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-800/60 flex items-center justify-center flex-shrink-0 border border-neutral-700/40 group-hover:border-neutral-600/60 transition-all duration-300 backdrop-blur-sm">
+                    <svg className="w-5 h-5 text-neutral-300 group-hover:text-neutral-100 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-neutral-200 font-semibold text-sm">Secure</h3>
-                    <p className="text-neutral-600 text-xs">End-to-end encrypted</p>
+                    <h3 className="text-neutral-200 font-semibold text-sm group-hover:text-neutral-100 transition-colors">Secure</h3>
+                    <p className="text-neutral-500 text-xs group-hover:text-neutral-400 transition-colors">End-to-end encrypted</p>
                   </div>
                 </div>
 
-                <div className="group flex items-center gap-3 p-4 rounded-xl bg-neutral-900/40 border border-neutral-800/40 hover:border-neutral-700/60 hover:bg-neutral-900/60 transition-all duration-300 cursor-default">
-                  <div className="w-10 h-10 rounded-lg bg-neutral-800/50 flex items-center justify-center flex-shrink-0 border border-neutral-700/30 group-hover:border-neutral-600/50 transition-colors">
-                    <svg className="w-5 h-5 text-neutral-400 group-hover:text-neutral-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="group flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-neutral-900/60 to-neutral-950/60 border border-neutral-700/40 hover:border-neutral-600/60 hover:from-neutral-900/80 hover:to-neutral-900/70 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-neutral-950/50 cursor-default backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-800/60 flex items-center justify-center flex-shrink-0 border border-neutral-700/40 group-hover:border-neutral-600/60 transition-all duration-300 backdrop-blur-sm">
+                    <svg className="w-5 h-5 text-neutral-300 group-hover:text-neutral-100 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-neutral-200 font-semibold text-sm">Team Focused</h3>
-                    <p className="text-neutral-600 text-xs">Built for teams</p>
+                    <h3 className="text-neutral-200 font-semibold text-sm group-hover:text-neutral-100 transition-colors">Team Focused</h3>
+                    <p className="text-neutral-500 text-xs group-hover:text-neutral-400 transition-colors">Built for teams</p>
                   </div>
                 </div>
 
-                <div className="group flex items-center gap-3 p-4 rounded-xl bg-neutral-900/40 border border-neutral-800/40 hover:border-neutral-700/60 hover:bg-neutral-900/60 transition-all duration-300 cursor-default">
-                  <div className="w-10 h-10 rounded-lg bg-neutral-800/50 flex items-center justify-center flex-shrink-0 border border-neutral-700/30 group-hover:border-neutral-600/50 transition-colors">
-                    <svg className="w-5 h-5 text-neutral-400 group-hover:text-neutral-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="group flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-neutral-900/60 to-neutral-950/60 border border-neutral-700/40 hover:border-neutral-600/60 hover:from-neutral-900/80 hover:to-neutral-900/70 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-neutral-950/50 cursor-default backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-800/60 flex items-center justify-center flex-shrink-0 border border-neutral-700/40 group-hover:border-neutral-600/60 transition-all duration-300 backdrop-blur-sm">
+                    <svg className="w-5 h-5 text-neutral-300 group-hover:text-neutral-100 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-neutral-200 font-semibold text-sm">Easy to Use</h3>
-                    <p className="text-neutral-600 text-xs">Intuitive interface</p>
+                    <h3 className="text-neutral-200 font-semibold text-sm group-hover:text-neutral-100 transition-colors">Easy to Use</h3>
+                    <p className="text-neutral-500 text-xs group-hover:text-neutral-400 transition-colors">Intuitive interface</p>
                   </div>
                 </div>
               </div>
@@ -278,19 +278,19 @@ export default function AuthPage() {
           <div className="relative z-10 max-w-lg w-full animate-fade-in animation-delay-1000">
             
             {/* Subtle Border Glow */}
-            <div className="absolute -inset-[1px] bg-neutral-800/30 rounded-3xl blur-sm" />
+            <div className="absolute -inset-[1px] bg-gradient-to-br from-neutral-700/20 to-neutral-800/10 rounded-3xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
-            <div className="relative bg-neutral-900/70 backdrop-blur-2xl rounded-2xl lg:rounded-3xl p-8 lg:p-10 border border-neutral-800/60 shadow-2xl shadow-black/50">
+            <div className="relative group bg-gradient-to-br from-neutral-900/70 to-neutral-950/80 backdrop-blur-2xl rounded-3xl lg:rounded-3xl p-8 lg:p-10 border border-neutral-700/50 shadow-2xl shadow-black/30 hover:shadow-2xl hover:shadow-neutral-700/20 hover:border-neutral-600/60 transition-all duration-500 hover:from-neutral-900/80 hover:to-neutral-950/70">
               
               {/* Quote Icon */}
-              <div className="mb-6">
-                <svg className="w-10 lg:w-12 h-10 lg:h-12 text-neutral-700" fill="currentColor" viewBox="0 0 24 24">
+              <div className="mb-6 transform group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-10 lg:w-12 h-10 lg:h-12 text-neutral-700 opacity-80 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                 </svg>
               </div>
 
               {/* Testimonial Text */}
-              <p className="text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed text-neutral-200">
+              <p className="text-lg lg:text-xl xl:text-2xl font-medium leading-relaxed text-neutral-200 group-hover:text-neutral-100 transition-colors duration-300">
                 VibeMeet has completely transformed how our team communicates.
                 <span className="block mt-2 text-neutral-100">
                   What used to take hours is now effortless.
@@ -365,10 +365,12 @@ export default function AuthPage() {
           from {
             opacity: 0;
             transform: translateY(-20px);
+            backdrop-filter: blur(0px);
           }
           to {
             opacity: 1;
             transform: translateY(0);
+            backdrop-filter: blur(16px);
           }
         }
 
@@ -414,49 +416,59 @@ export default function AuthPage() {
           100% { transform: translate(-50%, 50%) rotate(-45deg); opacity: 0; }
         }
 
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+
+        @keyframes glow-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(115, 115, 115, 0.1); }
+          50% { box-shadow: 0 0 0 10px rgba(115, 115, 115, 0); }
+        }
+
         .animate-wave {
-          animation: wave 8s ease-in-out infinite;
+          animation: wave 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-wave-delay {
-          animation: wave 8s ease-in-out infinite;
+          animation: wave 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
           animation-delay: -4s;
         }
 
         .animate-blink {
-          animation: blink 3s ease-in-out infinite;
+          animation: blink 3s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-fade-in {
-          animation: fade-in 0.6s ease-out forwards;
+          animation: fade-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         .animate-slide-down {
-          animation: slide-down 0.3s ease-out forwards;
+          animation: slide-down 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         .animate-move-right {
-          animation: move-right 8s ease-in-out infinite;
+          animation: move-right 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-move-left {
-          animation: move-left 8s ease-in-out infinite;
+          animation: move-left 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-move-down {
-          animation: move-down 10s ease-in-out infinite;
+          animation: move-down 10s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-move-up {
-          animation: move-up 10s ease-in-out infinite;
+          animation: move-up 10s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-diagonal-1 {
-          animation: diagonal-1 15s ease-in-out infinite;
+          animation: diagonal-1 15s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animate-diagonal-2 {
-          animation: diagonal-2 15s ease-in-out infinite;
+          animation: diagonal-2 15s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
         }
 
         .animation-delay-200 { animation-delay: 0.2s; }

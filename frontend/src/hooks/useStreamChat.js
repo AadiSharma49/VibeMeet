@@ -7,47 +7,51 @@ import * as Sentry from "@sentry/react";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
-export const useStreamChat=() => {
+export const useStreamChat = () => {
     const { user } = useUser();
     const [chatClient, setChatClient] = useState(null);
+    const [error, setError] = useState(null);
 
     const {
-        data: streamToken,
-        isLoading: tokenLoading,
-        error:tokenError,}=useQuery({
-            queryKey:["streamToken"],
-            queryFn:() => getStreamToken(user.id), 
-            enabled:!!user, //this is will take the object and convert it to a boolean value 
-        })
+        data: tokenData,
+        isLoading: isTokenLoading,
+        error: tokenError,
+    } = useQuery({
+        queryKey: ["streamToken", user?.id],
+        queryFn: () => getStreamToken(user.id),
+        enabled: !!user,
+        retry: 1,
+        staleTime: Infinity,
+    })
 
-        useEffect(()=>{
-            const initChat=async() => {
+    useEffect(() => {
+        if (!tokenData?.token || !user || chatClient) return;
 
-                if (!tokendata?.token || !user) return;
+        const initChat = async () => {
+            try {
+                const client = StreamChat.getInstance(STREAM_API_KEY);
+                await client.connectUser(
+                    {
+                        id: user.id,
+                        name: user.fullName || "Anonymous",
+                        image: user.imageUrl || "",
+                    },
+                    tokenData.token
+                );
+                setChatClient(client);
+                setError(null);
+            } catch (err) {
+                console.error("Stream Chat error:", err);
+                setError(err?.message || "Failed to connect");
+            }
+        }
 
-                try{
-                    const client=StreamChat.getInstance(STREAM_API_KEY);
-                    await client.connectUser(
-                        {
-                            id:user.id,
-                            name:user.fullName,
-                            image:user.imageUrl,
-                        }
-                    )
-                    setChatClient(client);
-                }catch(error){
-                    console.error("Error initializing Stream Chat:", error);
-                    Sentry.captureException(error,{
-                        tags:{component:"useStreamChat"},
-                        extra:{userId:user.id,context:"Failed to initialize Stream Chat",streamApiKey:STREAM_API_KEY ? "present" : "missing"},
-                    }); 
-            }  
-        } 
-         initChat()
-         return ()=>{
-            if(chatClient) chatClient.disconnectUser();
-         }
-        },[tokendata,user,chatClient])
+        initChat();
+    }, [tokenData?.token, user?.id]);
 
-        return { chatClient, isLoading:tokenLoading, error:tokenError };
-    } 
+    return {
+        chatClient,
+        isLoading: isTokenLoading && !tokenData?.token,
+        error: tokenError || error,
+    }
+} 

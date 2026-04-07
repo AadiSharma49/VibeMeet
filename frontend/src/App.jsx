@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-react";
-
+import React from "react";
 import * as Sentry from "@sentry/react";
 import { Navigate, Route, Routes } from "react-router";
 import AuthPage from "./pages/AuthPage.jsx";

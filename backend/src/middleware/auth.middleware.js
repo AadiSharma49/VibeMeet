@@ -1,5 +1,6 @@
 export const protectRoute=(req,res,next)=>{
-    if(!req.auth().isAuthenticated){
+    const userId = req.auth()?.userId;
+    if(!userId){
         return res.status(401).json({message:"Unauthorized - Login required"});
     }
     next();

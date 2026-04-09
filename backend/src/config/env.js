@@ -11,4 +11,6 @@ export const ENV = {
     SENTRY_DSN: process.env.SENTRY_DSN,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-4o-mini",
 }

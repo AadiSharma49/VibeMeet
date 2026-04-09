@@ -5,6 +5,7 @@ import { Navigate, Route, Routes } from "react-router";
 import AuthPage from "./pages/AuthPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
+import AccountPage from "./pages/AccountPage.jsx";
 
 const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
 const App=()=>
@@ -15,6 +16,7 @@ const App=()=>
   return (
         <SentryRoutes>
           <Route path="/" element={isSignedIn ? <HomePage/>: <Navigate to="/auth" replace /> } />
+          <Route path="/account" element={isSignedIn ? <AccountPage/>: <Navigate to="/auth" replace /> } />
           <Route path="/auth" element={!isSignedIn? <AuthPage/>: <Navigate to={"/"} replace /> } />
           <Route path="/call/:id" element={isSignedIn ? <CallPage/>: <Navigate to="/auth" replace /> } />
       

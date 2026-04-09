@@ -5,6 +5,8 @@ import { clerkMiddleware, requireAuth } from "@clerk/express";
 import { inngest, functions } from './config/inngest.js';
 import { serve } from "inngest/express";
 import chatRoutes from './routes/chat.route.js'; 
+import userRoutes from './routes/user.route.js';
+import aiRoutes from './routes/ai.route.js';
 import '../instrument.mjs';
 import * as Sentry from "@sentry/node";
 import cors from 'cors';
@@ -39,6 +41,8 @@ app.get('/health', (req, res) => {
 // Routes
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat", chatRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Debug Sentry
 app.use("/debug-sentry", (req, res) => {

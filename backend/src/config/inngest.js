@@ -20,6 +20,10 @@ const syncUser=inngest.createFunction(
             email:email_addresses[0]?.email_address,
             name:`${first_name||""}  ${last_name ||""}`.trim(),
             image:image_url,
+            bio: "",
+            status: "",
+            allowDirectMessages: true,
+            allowChannelCreation: true,
         }
         await User.create(newUser)
         await upsertStreamUser({
@@ -27,6 +31,9 @@ const syncUser=inngest.createFunction(
     id: newUser.clerkId.toString(),
     name: newUser.name,
     image: newUser.image,
+    bio: newUser.bio,
+    status: newUser.status,
+    allow_direct_messages: newUser.allowDirectMessages,
   },
 });
     }

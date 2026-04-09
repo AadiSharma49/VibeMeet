@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useChatContext } from "stream-chat-react";
 import toast from "react-hot-toast";
-import { AlertCircleIcon, HashIcon, LockIcon, UsersIcon, XIcon } from "lucide-react";
+import { AlertCircleIcon, HashIcon, LockIcon, SparklesIcon, UsersIcon, XIcon } from "lucide-react";
+import { getChannelNameSuggestions } from "@/lib/api";
 
-const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, setSearchParams }) => {
+const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, setSearchParams, onChannelCreated }) => {
   const [channelName, setChannelName] = useState("");
   const [channelType, setChannelType] = useState("public");
   const [description, setDescription] = useState("");
@@ -12,9 +12,10 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
   const [users, setUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [_, setSearchParamsLocal] = useState(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [aiHint, setAiHint] = useState("");
 
-  // Fetch users for member selection
   useEffect(() => {
     const fetchUsers = async () => {
       if (!chatClient?.user) return;
@@ -40,7 +41,6 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
     fetchUsers();
   }, [chatClient]);
 
-  // Auto-select all users for public channels
   useEffect(() => {
     if (channelType === "public") {
       setSelectedMembers(users.map((u) => u.id));
@@ -48,6 +48,14 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
       setSelectedMembers([]);
     }
   }, [channelType, users]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setAiSuggestions([]);
+      setAiHint("");
+      setIsSuggesting(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,6 +70,47 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
     const value = e.target.value;
     setChannelName(value);
     setError(validateChannelName(value));
+  };
+
+  const handleSuggestNames = async () => {
+    const prompt = channelName.trim();
+    const nextDescription = description.trim();
+
+    if (!prompt && !nextDescription) {
+      setAiHint("Add a rough idea or short description first.");
+      return;
+    }
+
+    setIsSuggesting(true);
+    setAiHint("");
+
+    try {
+      const response = await getChannelNameSuggestions({
+        prompt,
+        description: nextDescription,
+        channelType,
+      });
+
+      const nextSuggestions = response?.suggestions || [];
+      setAiSuggestions(nextSuggestions);
+      setAiHint(
+        response?.source === "openai"
+          ? "AI suggestions are ready."
+          : response?.meta?.message || "Showing smart fallback suggestions right now."
+      );
+    } catch (requestError) {
+      console.error("Failed to get channel suggestions:", requestError);
+      setAiSuggestions([]);
+      setAiHint(requestError?.response?.data?.message || "Could not generate suggestions right now.");
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const applySuggestion = (suggestion) => {
+    setChannelName(suggestion.name);
+    setDescription(suggestion.description || "");
+    setError(validateChannelName(suggestion.name));
   };
 
   const handleMemberToggle = (id) => {
@@ -124,12 +173,17 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
       if (setSearchParams) {
         setSearchParams({ channel: channelId });
       }
+      if (onChannelCreated) {
+        await onChannelCreated(channel);
+      }
 
       toast.success(`Channel "${channelName}" created successfully!`);
       setChannelName("");
       setDescription("");
       setChannelType("public");
       setSelectedMembers([]);
+      setAiSuggestions([]);
+      setAiHint("");
       onClose();
     } catch (error) {
       console.error("Error creating channel:", error);
@@ -143,7 +197,6 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-neutral-900 border border-neutral-800/50 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-down">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-800/50 sticky top-0 bg-neutral-900">
           <h2 className="text-lg font-bold text-neutral-100">Create a Channel</h2>
           <button
@@ -154,9 +207,7 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Error Message */}
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg animate-slide-down">
               <AlertCircleIcon size={18} className="text-red-400 shrink-0" />
@@ -164,9 +215,19 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
             </div>
           )}
 
-          {/* Channel Name */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-neutral-300">Channel Name</label>
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-medium text-neutral-300">Channel Name</label>
+              <button
+                type="button"
+                onClick={handleSuggestNames}
+                disabled={isSuggesting}
+                className="inline-flex items-center gap-2 rounded-lg border border-neutral-700/60 bg-neutral-800/60 px-3 py-1.5 text-xs font-medium text-neutral-200 transition-all hover:border-neutral-500 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <SparklesIcon size={14} />
+                {isSuggesting ? "Thinking..." : "Suggest with AI"}
+              </button>
+            </div>
             <div className="flex items-center gap-3 px-4 py-2 bg-neutral-800/50 border border-neutral-700/50 rounded-lg focus-within:border-neutral-600 transition-all duration-200">
               <HashIcon size={18} className="text-neutral-500" />
               <input
@@ -187,9 +248,45 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
                   .replace(/[^a-z0-9-_]/g, "")}
               </p>
             )}
+            {aiHint ? <p className="text-xs text-neutral-500">{aiHint}</p> : null}
+            {aiSuggestions.length > 0 && (
+              <div className="space-y-2 rounded-xl border border-neutral-800/60 bg-neutral-950/60 p-3">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  <SparklesIcon size={14} />
+                  Suggested Names
+                </div>
+                <div className="space-y-2">
+                  {aiSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.slug}
+                      type="button"
+                      onClick={() => applySuggestion(suggestion)}
+                      className="w-full rounded-xl border border-neutral-800/70 bg-neutral-900/70 px-3 py-3 text-left transition-all hover:border-neutral-600 hover:bg-neutral-900"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-neutral-100">{suggestion.name}</p>
+                          <p className="text-xs text-neutral-500">#{suggestion.slug}</p>
+                        </div>
+                        <span className="rounded-full bg-neutral-800 px-2 py-1 text-[11px] text-neutral-300">
+                          Use
+                        </span>
+                      </div>
+                      {suggestion.reason ? (
+                        <p className="mt-2 text-xs leading-5 text-neutral-400">{suggestion.reason}</p>
+                      ) : null}
+                      {suggestion.description ? (
+                        <p className="mt-2 text-xs leading-5 text-neutral-500">
+                          Description: {suggestion.description}
+                        </p>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Channel Type */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-neutral-300">Channel Type</label>
             <div className="space-y-2">
@@ -229,7 +326,6 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
             </div>
           </div>
 
-          {/* Add Members (for Private Channels) */}
           {channelType === "private" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -285,7 +381,6 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
             </div>
           )}
 
-          {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-neutral-300">Description (Optional)</label>
             <textarea
@@ -299,7 +394,6 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
             <p className="text-xs text-neutral-600">{description.length}/200</p>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"

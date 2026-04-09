@@ -4,7 +4,6 @@ import './index.css'
 import App from './App.jsx'
 import { ClerkProvider } from '@clerk/clerk-react'
 import {
-  createBrowserRouter,
   createRoutesFromChildren,
   matchRoutes,
   useLocation,

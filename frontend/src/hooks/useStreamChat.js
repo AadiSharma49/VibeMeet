@@ -47,7 +47,7 @@ export const useStreamChat = () => {
         }
 
         initChat();
-    }, [tokenData?.token, user?.id]);
+    }, [chatClient, tokenData?.token, user]);
 
     return {
         chatClient,

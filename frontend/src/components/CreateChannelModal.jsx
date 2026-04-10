@@ -3,6 +3,12 @@ import toast from "react-hot-toast";
 import { AlertCircleIcon, HashIcon, LockIcon, SparklesIcon, UsersIcon, XIcon } from "lucide-react";
 import { getChannelNameSuggestions } from "@/lib/api";
 
+const createJoinPasscode = () =>
+  Math.random()
+    .toString(36)
+    .slice(2, 10)
+    .toUpperCase();
+
 const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, setSearchParams, onChannelCreated }) => {
   const [channelName, setChannelName] = useState("");
   const [channelType, setChannelType] = useState("public");
@@ -43,11 +49,9 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
 
   useEffect(() => {
     if (channelType === "public") {
-      setSelectedMembers(users.map((u) => u.id));
-    } else {
       setSelectedMembers([]);
     }
-  }, [channelType, users]);
+  }, [channelType]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -152,6 +156,8 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
         name: channelName.trim(),
         created_by_id: chatClient.user.id,
         members: [chatClient.user.id, ...selectedMembers],
+        join_passcode: createJoinPasscode(),
+        pending_join_requests: [],
       };
 
       if (description) channelData.description = description;
@@ -177,7 +183,7 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
         await onChannelCreated(channel);
       }
 
-      toast.success(`Channel "${channelName}" created successfully!`);
+      toast.success(`Channel "${channelName}" created. Open the passcode button to share access.`);
       setChannelName("");
       setDescription("");
       setChannelType("public");
@@ -302,7 +308,7 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
                   <HashIcon size={16} className="text-neutral-400 group-hover:text-neutral-300" />
                   <div>
                     <div className="text-sm font-medium text-neutral-200">Public</div>
-                    <div className="text-xs text-neutral-500">Anyone can join</div>
+                    <div className="text-xs text-neutral-500">Anyone with the passcode can join instantly</div>
                   </div>
                 </div>
               </label>
@@ -319,11 +325,14 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
                   <LockIcon size={16} className="text-neutral-400 group-hover:text-neutral-300" />
                   <div>
                     <div className="text-sm font-medium text-neutral-200">Private</div>
-                    <div className="text-xs text-neutral-500">Only invited members</div>
+                    <div className="text-xs text-neutral-500">Passcode holders can request access, owner approves</div>
                   </div>
                 </div>
               </label>
             </div>
+            <p className="text-xs text-neutral-500">
+              A join passcode is created automatically after channel creation. Only the owner can view and share it.
+            </p>
           </div>
 
           {channelType === "private" && (

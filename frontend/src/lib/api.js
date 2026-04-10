@@ -11,6 +11,11 @@ export async function getCurrentUserProfile() {
     return response.data;
 }
 
+export async function joinChannelByPasscode(payload) {
+    const response = await axiosInstance.post("/chat/join-by-passcode", payload);
+    return response.data;
+}
+
 export async function updateCurrentUserProfile(payload) {
     const response = await axiosInstance.patch("/users/me", payload);
     return response.data;

@@ -1,4 +1,5 @@
-import { BotIcon, HashIcon, LockIcon, SparklesIcon, UsersIcon, PinIcon, VideoIcon, UserPlus2Icon } from "lucide-react";
+import { BotIcon, HashIcon, LockIcon, SparklesIcon, Trash2Icon, UsersIcon, PinIcon, VideoIcon, UserPlus2Icon, KeyRoundIcon } from "lucide-react";
+import toast from "react-hot-toast";
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
@@ -7,8 +8,9 @@ import PinnedMessagesModal from "@/components/PinnedMessagesModal";
 import InviteModal from "@/components/InviteModal";
 import AskAIModal from "@/components/AskAIModal";
 import CatchUpModal from "@/components/CatchUpModal";
+import ChannelPasscodeModal from "@/components/ChannelPasscodeModal";
 
-const CustomChannelHeader = ({ channel, messages = [] }) => {
+const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
   const { user } = useUser();
   const navigate = useNavigate();
   const [showPinnedMessages, setShowPinnedMessages] = useState(false);
@@ -17,6 +19,7 @@ const CustomChannelHeader = ({ channel, messages = [] }) => {
   const [showInvite, setShowInvite] = useState(false);
   const [showAskAI, setShowAskAI] = useState(false);
   const [showCatchUp, setShowCatchUp] = useState(false);
+  const [showPasscode, setShowPasscode] = useState(false);
   
   if (!channel) return null;
 
@@ -28,6 +31,7 @@ const CustomChannelHeader = ({ channel, messages = [] }) => {
   );
 
   const isDM = memberCount === 2 && !channel.data?.name;
+  const isOwner = channel.data?.created_by_id === user?.id;
 
   const handleShowPinned = async () => {
     const channelState = await channel.query();
@@ -42,6 +46,22 @@ const CustomChannelHeader = ({ channel, messages = [] }) => {
         text: `I've started a video call. Join me here: ${callUrl}`,
       });
       navigate(`/call/${channel.id}`);
+    }
+  };
+
+  const handleDeleteChannel = async () => {
+    if (!channel || !isOwner) return;
+
+    const confirmed = window.confirm(`Delete #${channel.data?.name || channel.id}? This cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      await channel.delete();
+      toast.success("Channel deleted");
+      await onChannelDeleted?.(channel);
+    } catch (deleteError) {
+      console.error("Failed to delete channel:", deleteError);
+      toast.error(deleteError?.message || "Failed to delete channel");
     }
   };
 
@@ -83,6 +103,18 @@ const CustomChannelHeader = ({ channel, messages = [] }) => {
             <span className="text-sm">{memberCount}</span>
           </button>
 
+          {!isDM && isOwner && (
+            <button
+              onClick={() => setShowPasscode(true)}
+              className="p-2 rounded-lg text-neutral-400 
+                     hover:text-amber-300 hover:bg-neutral-800/60 
+                     transition-all"
+              title="View Join Passcode"
+            >
+              <KeyRoundIcon className="size-5" />
+            </button>
+          )}
+
           {!isDM && (
             <button
               onClick={() => setShowInvite(true)}
@@ -92,6 +124,16 @@ const CustomChannelHeader = ({ channel, messages = [] }) => {
               title="Invite Members"
             >
               <UserPlus2Icon className="size-5" />
+            </button>
+          )}
+
+          {!isDM && isOwner && (
+            <button
+              onClick={handleDeleteChannel}
+              className="rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-red-300"
+              title="Delete Channel"
+            >
+              <Trash2Icon className="size-5" />
             </button>
           )}
 
@@ -145,6 +187,10 @@ const CustomChannelHeader = ({ channel, messages = [] }) => {
 
       {showInvite && (
         <InviteModal channel={channel} onClose={() => setShowInvite(false)} />
+      )}
+
+      {showPasscode && isOwner && (
+        <ChannelPasscodeModal channel={channel} onClose={() => setShowPasscode(false)} />
       )}
 
       {showAskAI && (

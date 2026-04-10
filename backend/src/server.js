@@ -1,23 +1,34 @@
 import express from 'express';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import { clerkMiddleware } from "@clerk/express";
 import { inngest, functions } from './config/inngest.js';
 import { serve } from "inngest/express";
 import chatRoutes from './routes/chat.route.js'; 
 import userRoutes from './routes/user.route.js';
 import aiRoutes from './routes/ai.route.js';
-import '../instrument.mjs';
 import * as Sentry from "@sentry/node";
 import cors from 'cors';
 
 const app = express();
+const allowedOrigins = new Set(
+    [
+        ENV.CLIENT_URL,
+        ...(ENV.CLIENT_URLS ? ENV.CLIENT_URLS.split(",") : []),
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+        .map((origin) => origin?.trim())
+        .filter(Boolean)
+);
 
 // Middleware
 app.use(express.json());
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        if (!origin || allowedOrigins.has(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));

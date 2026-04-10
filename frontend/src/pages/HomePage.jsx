@@ -5,17 +5,14 @@ import { useQuery } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
 import { Link } from "react-router-dom"
-import { Menu, X, Plus, Send, Hash, Lock, Users, Paperclip, Image as ImageIcon, FileText, Download, Trash2, Settings, Reply, Forward, Pin, PinOff } from "lucide-react"
+import { Menu, X, Plus, Send, Hash, Lock, Users, Paperclip, Image as ImageIcon, FileText, Download, Trash2, Settings, Reply, Forward, Pin, PinOff, BarChart3, LogIn } from "lucide-react"
 import { Chat } from "stream-chat-react"
 import ChannelInsightsPanel from "@/components/ChannelInsightsPanel"
+import CreatePollModal from "@/components/CreatePollModal"
 import CreateChannelModal from "@/components/CreateChannelModal"
 import CustomChannelHeader from "@/components/CustomChannelHeader"
+import JoinChannelModal from "@/components/JoinChannelModal"
 import UsersList from "@/components/UsersList"
-
-const DEFAULT_CHANNELS = [
-  { id: "general", name: "general", description: "Team-wide conversations" },
-  { id: "announcements", name: "announcements", description: "Important updates for everyone" },
-]
 
 const isDirectMessageChannel = (channel) => {
   if (!channel) return false
@@ -107,6 +104,7 @@ const getMessagePreview = (message) => {
 
 const URL_SPLIT_PATTERN = /(https?:\/\/[^\s]+)/g
 const URL_MATCH_PATTERN = /^https?:\/\/[^\s]+$/i
+const MENTION_MATCH_PATTERN = /^@[\w-]+$/i
 
 const renderTextWithLinks = (text = "", className = "") =>
   String(text)
@@ -122,8 +120,28 @@ const renderTextWithLinks = (text = "", className = "") =>
         >
           {part}
         </a>
+      ) : MENTION_MATCH_PATTERN.test(part) ? (
+        <span
+          key={`${part}-${index}`}
+          className={`${className} rounded-full bg-blue-500/15 px-2 py-0.5 font-medium text-blue-300`}
+        >
+          {part}
+        </span>
       ) : (
-        <span key={`${part}-${index}`}>{part}</span>
+        <span key={`${part}-${index}`}>
+          {part.split(/(\s+)/).map((token, tokenIndex) =>
+            MENTION_MATCH_PATTERN.test(token) ? (
+              <span
+                key={`${token}-${tokenIndex}`}
+                className={`${className} rounded-full bg-blue-500/15 px-2 py-0.5 font-medium text-blue-300`}
+              >
+                {token}
+              </span>
+            ) : (
+              <span key={`${token}-${tokenIndex}`}>{token}</span>
+            )
+          )}
+        </span>
       )
     )
 
@@ -142,17 +160,22 @@ const buildAIMessageContext = (messages = []) =>
 
 const HomePage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
   const [activeChannel, setActiveChannel] = useState(null)
   const [channels, setChannels] = useState([])
   const [messages, setMessages] = useState([])
   const [messageText, setMessageText] = useState("")
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isCreatePollOpen, setIsCreatePollOpen] = useState(false)
   const [loadingTimeout, setLoadingTimeout] = useState(false)
   const [isChannelsLoading, setIsChannelsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [isPollSubmitting, setIsPollSubmitting] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState([])
   const [hoveredMessageId, setHoveredMessageId] = useState(null)
   const [replyTarget, setReplyTarget] = useState(null)
+  const [mentionSuggestions, setMentionSuggestions] = useState([])
+  const [activeMentionQuery, setActiveMentionQuery] = useState("")
   const [channelInsights, setChannelInsights] = useState(null)
   const [isInsightsLoading, setIsInsightsLoading] = useState(false)
   const [rewriteMode, setRewriteMode] = useState("clearer")
@@ -179,36 +202,11 @@ const HomePage = () => {
     setMessages(nextMessages)
   }, [])
 
-  const ensureDefaultChannels = useCallback(async () => {
-    if (!chatClient?.user?.id) return []
-    const ensuredChannels = []
-
-    for (const defaultChannel of DEFAULT_CHANNELS) {
-      try {
-        const channel = chatClient.channel("messaging", defaultChannel.id, {
-          name: defaultChannel.name,
-          description: defaultChannel.description,
-          created_by_id: chatClient.user.id,
-          members: [chatClient.user.id],
-          visibility: "public",
-          discoverable: true,
-        })
-        await channel.watch()
-        ensuredChannels.push(channel)
-      } catch (channelError) {
-        console.error(`Failed to ensure channel ${defaultChannel.id}:`, channelError)
-      }
-    }
-
-    return ensuredChannels
-  }, [chatClient])
-
   const loadChannels = useCallback(async () => {
     if (!chatClient?.user?.id) return
     setIsChannelsLoading(true)
 
     try {
-      const defaultChannels = await ensureDefaultChannels()
       const queriedChannels = await chatClient.queryChannels(
         {
           type: "messaging",
@@ -224,31 +222,14 @@ const HomePage = () => {
           state: true,
         }
       )
-
-      const prioritizedChannels = []
-
-      DEFAULT_CHANNELS.forEach((defaultChannel) => {
-        const existingChannel =
-          queriedChannels.find((channel) => channel.id === defaultChannel.id) ||
-          defaultChannels.find((channel) => channel.id === defaultChannel.id)
-
-        if (existingChannel) {
-          prioritizedChannels.push(existingChannel)
-        }
-      })
-
-      queriedChannels.forEach((channel) => {
-        prioritizedChannels.push(channel)
-      })
-
-      setChannels(dedupeChannels(prioritizedChannels, chatClient.user.id))
+      setChannels(dedupeChannels(queriedChannels, chatClient.user.id))
     } catch (loadError) {
       console.error("Failed to load channels:", loadError)
       setChannels([])
     } finally {
       setIsChannelsLoading(false)
     }
-  }, [chatClient, ensureDefaultChannels])
+  }, [chatClient])
 
   const refreshInsights = useCallback(async (channelToInspect = activeChannelRef.current, messagesToInspect = messages) => {
     if (!channelToInspect) {
@@ -415,6 +396,25 @@ const HomePage = () => {
     setReplyTarget(null)
   }
 
+  const handleChannelDeleted = async (deletedChannel) => {
+    const nextChannels = channels.filter((channel) => channel.id !== deletedChannel.id)
+    setChannels(nextChannels)
+
+    if (activeChannelRef.current?.id === deletedChannel.id) {
+      const fallbackChannel = nextChannels[0] || null
+      setActiveChannel(fallbackChannel)
+      activeChannelRef.current = fallbackChannel
+
+      if (fallbackChannel) {
+        setSearchParams({ channel: fallbackChannel.id }, { replace: true })
+      } else {
+        setSearchParams({}, { replace: true })
+      }
+    }
+
+    await loadChannels()
+  }
+
   const handleReplyMessage = (message) => {
     setReplyTarget(message)
     messageInputRef.current?.focus()
@@ -503,10 +503,15 @@ const HomePage = () => {
         text: trimmedMessage,
         attachments: uploadedAttachments,
         quoted_message_id: replyTarget?.id,
+        mentioned_users: Object.values(activeChannel.state?.members || {})
+          .map((member) => member.user?.id)
+          .filter((id) => id && new RegExp(`(^|\\s)@${id}(?=\\s|$)`).test(trimmedMessage)),
       })
 
       setMessageText("")
       setReplyTarget(null)
+      setMentionSuggestions([])
+      setActiveMentionQuery("")
       pendingAttachments.forEach((attachment) => {
         if (attachment.previewUrl) {
           URL.revokeObjectURL(attachment.previewUrl)
@@ -521,6 +526,69 @@ const HomePage = () => {
       console.error("Failed to send message:", sendError)
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const handleCreatePoll = async ({ question, options }) => {
+    if (!activeChannel || isPollSubmitting) return
+
+    setIsPollSubmitting(true)
+
+    try {
+      await activeChannel.sendMessage({
+        text: `Poll: ${question}`,
+        poll: {
+          question,
+          options: options.map((option, index) => ({
+            id: `option-${index + 1}`,
+            text: option,
+            votes: [],
+          })),
+          created_by: chatClient.user?.id || "",
+        },
+      })
+
+      setIsCreatePollOpen(false)
+      syncMessages(activeChannel)
+    } catch (pollError) {
+      console.error("Failed to create poll:", pollError)
+    } finally {
+      setIsPollSubmitting(false)
+    }
+  }
+
+  const handleVotePoll = async (message, optionId) => {
+    if (!chatClient || !message?.id || !message?.poll || !chatClient.user?.id) return
+
+    const currentUserId = chatClient.user.id
+    const updatedOptions = (message.poll.options || []).map((option) => {
+      const nextVotes = (option.votes || []).filter((vote) => vote !== currentUserId)
+
+      if (option.id === optionId) {
+        nextVotes.push(currentUserId)
+      }
+
+      return {
+        ...option,
+        votes: Array.from(new Set(nextVotes)),
+      }
+    })
+
+    try {
+      await chatClient.updateMessage({
+        ...message,
+        poll: {
+          ...message.poll,
+          options: updatedOptions,
+        },
+      })
+
+      if (activeChannelRef.current) {
+        await activeChannelRef.current.watch()
+        syncMessages(activeChannelRef.current)
+      }
+    } catch (voteError) {
+      console.error("Failed to update poll vote:", voteError)
     }
   }
 
@@ -556,6 +624,30 @@ const HomePage = () => {
   }, [pendingAttachments])
 
   useEffect(() => {
+    const match = messageText.match(/(?:^|\s)@([\w-]*)$/)
+
+    if (!match || !activeChannel) {
+      setMentionSuggestions([])
+      setActiveMentionQuery("")
+      return
+    }
+
+    const query = match[1].toLowerCase()
+    const members = Object.values(activeChannel.state?.members || {})
+      .map((member) => member.user)
+      .filter((member) => member?.id && member.id !== chatClient?.user?.id)
+      .filter((member) => {
+        const id = member.id.toLowerCase()
+        const name = (member.name || "").toLowerCase()
+        return !query || id.includes(query) || name.includes(query)
+      })
+      .slice(0, 5)
+
+    setActiveMentionQuery(query)
+    setMentionSuggestions(members)
+  }, [activeChannel, chatClient?.user?.id, messageText])
+
+  useEffect(() => {
     return () => {
       pendingAttachmentsRef.current.forEach((attachment) => {
         if (attachment.previewUrl) {
@@ -571,6 +663,17 @@ const HomePage = () => {
   )
   const activeChannelName = getChannelDisplayName(activeChannel, chatClient?.user?.id)
   const canCreateChannels = currentUserProfile?.user?.allowChannelCreation !== false
+  const insertMention = (member) => {
+    const nextText = messageText.replace(/(?:^|\s)@([\w-]*)$/, (fullMatch) => {
+      const prefix = fullMatch.startsWith(" ") ? " " : ""
+      return `${prefix}@${member.id} `
+    })
+
+    setMessageText(nextText)
+    setMentionSuggestions([])
+    setActiveMentionQuery("")
+    messageInputRef.current?.focus()
+  }
 
   if (error) {
     return (
@@ -673,6 +776,13 @@ const HomePage = () => {
                 Turn channel creation back on from your account page.
               </p>
             )}
+            <button
+              onClick={() => setIsJoinModalOpen(true)}
+              className="mt-3 w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/70 px-4 py-2 text-sm font-medium text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100"
+            >
+              <LogIn size={16} />
+              Join With Passcode
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-2">
@@ -745,7 +855,11 @@ const HomePage = () => {
 
           {activeChannel ? (
             <>
-              <CustomChannelHeader channel={activeChannel} messages={messages} />
+              <CustomChannelHeader
+                channel={activeChannel}
+                messages={messages}
+                onChannelDeleted={handleChannelDeleted}
+              />
               <ChannelInsightsPanel
                 insights={channelInsights}
                 isLoading={isInsightsLoading}
@@ -871,6 +985,38 @@ const HomePage = () => {
                               </p>
                             ) : null}
 
+                            {message.poll ? (
+                              <div className={`${message.text ? "mt-3" : ""} rounded-2xl border border-neutral-800/70 bg-neutral-950/70 p-4`}>
+                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                  <BarChart3 size={14} />
+                                  Poll
+                                </div>
+                                <p className="mt-2 text-sm font-semibold text-neutral-100">{message.poll.question}</p>
+                                <div className="mt-3 space-y-2">
+                                  {(message.poll.options || []).map((option) => {
+                                    const voteCount = option.votes?.length || 0
+                                    const hasVoted = option.votes?.includes(chatClient.user?.id)
+
+                                    return (
+                                      <button
+                                        key={option.id}
+                                        type="button"
+                                        onClick={() => handleVotePoll(message, option.id)}
+                                        className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${
+                                          hasVoted
+                                            ? "border-blue-500/40 bg-blue-500/10 text-blue-100"
+                                            : "border-neutral-800 bg-neutral-900/80 text-neutral-200 hover:border-neutral-700"
+                                        }`}
+                                      >
+                                        <span className="text-sm">{option.text}</span>
+                                        <span className="text-xs text-neutral-400">{voteCount} vote{voteCount === 1 ? "" : "s"}</span>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            ) : null}
+
                             {message.attachments?.length ? (
                               <div className={`${message.text ? "mt-3" : ""} space-y-3`}>
                                 {message.attachments.map((attachment, index) => {
@@ -932,7 +1078,7 @@ const HomePage = () => {
                   })
                 )}
               </div>
-              <div className="min-h-20 bg-neutral-900/50 border-t border-neutral-800/50 p-4">
+              <div className="relative min-h-20 bg-neutral-900/50 border-t border-neutral-800/50 p-4">
                 {replyTarget && (
                   <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-neutral-800/70 bg-neutral-950/70 px-4 py-3">
                     <div className="min-w-0">
@@ -954,6 +1100,13 @@ const HomePage = () => {
                 )}
 
                 <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatePollOpen(true)}
+                    className="rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100"
+                  >
+                    Create Poll
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleRewriteMessage("clearer")}
@@ -987,6 +1140,40 @@ const HomePage = () => {
                     {isRewriting && rewriteMode === "announcement" ? "Formatting..." : "AI Announcement"}
                   </button>
                 </div>
+
+                {mentionSuggestions.length > 0 && (
+                  <div className="absolute bottom-[calc(100%-0.75rem)] left-4 right-4 z-20 rounded-2xl border border-neutral-800/80 bg-neutral-950/95 p-2 shadow-2xl backdrop-blur-sm">
+                    <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                      Mention someone {activeMentionQuery ? `matching "${activeMentionQuery}"` : ""}
+                    </p>
+                    <div className="max-h-60 space-y-1 overflow-y-auto">
+                      {mentionSuggestions.map((member) => (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => insertMention(member)}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-neutral-900"
+                        >
+                          {member.image ? (
+                            <img
+                              src={member.image}
+                              alt={member.name || member.id}
+                              className="size-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex size-8 items-center justify-center rounded-full bg-neutral-800 text-xs font-semibold text-neutral-200">
+                              {(member.name || member.id).charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-neutral-100">{member.name || member.id}</p>
+                            <p className="truncate text-xs text-neutral-500">@{member.id}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   <input
@@ -1130,6 +1317,39 @@ const HomePage = () => {
           setActiveChannel={handleChannelSelect}
           setSearchParams={setSearchParams}
           onChannelCreated={loadChannels}
+        />
+        <JoinChannelModal
+          isOpen={isJoinModalOpen}
+          onClose={() => setIsJoinModalOpen(false)}
+          chatClient={chatClient}
+          onJoinedChannel={async (channelId) => {
+            await loadChannels()
+            const nextChannel = activeChannelRef.current?.id === channelId
+              ? activeChannelRef.current
+              : (await chatClient.queryChannels(
+                  {
+                    type: "messaging",
+                    id: channelId,
+                    members: { $in: [chatClient.user.id] },
+                  },
+                  {},
+                  {
+                    watch: true,
+                    state: true,
+                    limit: 1,
+                  }
+                ))[0]
+
+            if (nextChannel) {
+              handleChannelSelect(nextChannel)
+            }
+          }}
+        />
+        <CreatePollModal
+          isOpen={isCreatePollOpen}
+          onClose={() => setIsCreatePollOpen(false)}
+          onCreatePoll={handleCreatePoll}
+          isSubmitting={isPollSubmitting}
         />
       </div>
     </Chat>

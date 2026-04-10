@@ -2,6 +2,19 @@ import { useState } from "react";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { askChannelAI } from "@/lib/api";
 
+const serializeChannel = (channel) => ({
+  id: channel?.id || "",
+  name: channel?.data?.name || channel?.name || channel?.id || "",
+  type: channel?.data?.private ? "private" : "public",
+});
+
+const serializeMessages = (messages = []) =>
+  messages.slice(-30).map((message) => ({
+    user: message.user?.name || message.user?.id || "Unknown user",
+    text: message.text || "",
+    createdAt: message.created_at || "",
+  }));
+
 const AskAIModal = ({ isOpen, onClose, channel, messages = [] }) => {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState(null);
@@ -16,8 +29,8 @@ const AskAIModal = ({ isOpen, onClose, channel, messages = [] }) => {
 
     try {
       const response = await askChannelAI({
-        channel,
-        messages,
+        channel: serializeChannel(channel),
+        messages: serializeMessages(messages),
         question,
       });
 
@@ -37,9 +50,9 @@ const AskAIModal = ({ isOpen, onClose, channel, messages = [] }) => {
       <div className="w-full max-w-2xl rounded-3xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-800/70 px-6 py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Ask AI</p>
-            <h2 className="mt-1 text-xl font-semibold text-neutral-100">
-              Ask about {channel?.name || channel?.id || "this channel"}
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Ask AI</p>
+              <h2 className="mt-1 text-xl font-semibold text-neutral-100">
+              Ask about {channel?.data?.name || channel?.name || channel?.id || "this channel"}
             </h2>
           </div>
           <button

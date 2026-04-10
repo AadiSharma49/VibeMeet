@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, HelpCircle, Loader2, Sparkles, X } from "lucide-react";
 import { getChannelCatchUp } from "@/lib/api";
 
+const serializeChannel = (channel) => ({
+  id: channel?.id || "",
+  name: channel?.data?.name || channel?.name || channel?.id || "",
+  type: channel?.data?.private ? "private" : "public",
+});
+
+const serializeMessages = (messages = []) =>
+  messages.slice(-30).map((message) => ({
+    user: message.user?.name || message.user?.id || "Unknown user",
+    text: message.text || "",
+    createdAt: message.created_at || "",
+  }));
+
 const CatchUpModal = ({ isOpen, onClose, channel, messages = [] }) => {
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,8 +27,8 @@ const CatchUpModal = ({ isOpen, onClose, channel, messages = [] }) => {
 
       try {
         const response = await getChannelCatchUp({
-          channel,
-          messages,
+          channel: serializeChannel(channel),
+          messages: serializeMessages(messages),
         });
 
         setResult(response);
@@ -43,7 +56,7 @@ const CatchUpModal = ({ isOpen, onClose, channel, messages = [] }) => {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Catch Up</p>
             <h2 className="mt-1 text-xl font-semibold text-neutral-100">
-              Recent summary for {channel?.name || channel?.id || "this channel"}
+              Recent summary for {channel?.data?.name || channel?.name || channel?.id || "this channel"}
             </h2>
           </div>
           <button

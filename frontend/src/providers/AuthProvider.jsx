@@ -1,37 +1,52 @@
-import { createContext,useEffect } from "react";
+import { createContext, useEffect, useRef } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { axiosInstance } from "@/lib/axios";
 import toast from "react-hot-toast";
 
-const AuthContext=createContext({});
+const AuthContext = createContext({});
 
+export default function AuthProvider({ children }) {
+    const { getToken, isSignedIn, isLoaded } = useAuth();
+    const interceptorRef = useRef(null);
 
-export default function AuthProvider({children}){
-    const {getToken}=useAuth();
-    useEffect(()=>{
+    useEffect(() => {
+        // Only set up interceptor if we have a signed-in user
+        if (!isLoaded) return;
 
-        const interceptor=axiosInstance.interceptors.request.use(
-        async(config)=>{
-            try{
-                const token=await getToken();
-                if(token) config.headers.Authorization=`Bearer ${token}`;
-                return config;
-           }catch(error){
-            if(error.message?.includes("Failed to fetch") || error.message?.includes("Network Error")){
-                toast.error("Authentication error. Please refresh page.");
-            }
-            console.error("Error in Axios request:", error);
+        // Clear any existing interceptor
+        if (interceptorRef.current) {
+            axiosInstance.interceptors.request.eject(interceptorRef.current);
         }
-                return config;
-           },
-           (error)=>{
-            console.error("Error in Axios request:", error);
-            return Promise.reject(error);
-           }
+
+        interceptorRef.current = axiosInstance.interceptors.request.use(
+            async (config) => {
+                try {
+                    // Only add token if user is signed in
+                    if (isSignedIn) {
+                        const token = await getToken();
+                        if (token) {
+                            config.headers.Authorization = `Bearer ${token}`;
+                        }
+                    }
+                    return config;
+                } catch (error) {
+                    console.error("Token error:", error);
+                    // Don't block request on token error, just proceed without auth
+                    return config;
+                }
+            },
+            (error) => {
+                console.error("Error in Axios request:", error);
+                return Promise.reject(error);
+            }
         );
-        return()=>axiosInstance.interceptors.request.eject(interceptor);
 
-    },[getToken]);
+        return () => {
+            if (interceptorRef.current) {
+                axiosInstance.interceptors.request.eject(interceptorRef.current);
+            }
+        };
+    }, [getToken, isSignedIn, isLoaded]);
 
-    return <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>;
 }

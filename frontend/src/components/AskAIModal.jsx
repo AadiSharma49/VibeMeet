@@ -1,6 +1,31 @@
 import { useState } from "react";
 import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { askChannelAI } from "@/lib/api";
+import { useUser } from "@clerk/clerk-react";
+
+const isDirectMessageChannel = (channel) => {
+  if (!channel) return false;
+  const members = Object.keys(channel.state?.members || {});
+  const hasOnlyTwoMembers = members.length === 2;
+  const hasCustomName = Boolean(channel.data?.name);
+  return hasOnlyTwoMembers && !hasCustomName;
+};
+
+const getDirectMessageUser = (channel, currentUserId) => {
+  if (!channel || !currentUserId) return null;
+  return Object.values(channel.state?.members || {}).find(
+    (member) => member.user?.id !== currentUserId
+  )?.user;
+};
+
+const getChannelDisplayName = (channel, currentUserId) => {
+  if (!channel) return "this channel";
+  if (isDirectMessageChannel(channel)) {
+    const otherUser = getDirectMessageUser(channel, currentUserId);
+    return otherUser?.name || otherUser?.id || "Direct Message";
+  }
+  return channel.data?.name || channel.id;
+};
 
 const serializeChannel = (channel) => ({
   id: channel?.id || "",
@@ -19,8 +44,12 @@ const AskAIModal = ({ isOpen, onClose, channel, messages = [] }) => {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useUser();
 
   if (!isOpen) return null;
+
+  const channelDisplayName = getChannelDisplayName(channel, user?.id);
+  const isDM = isDirectMessageChannel(channel);
 
   const handleAsk = async () => {
     if (!question.trim() || isLoading) return;
@@ -51,9 +80,9 @@ const AskAIModal = ({ isOpen, onClose, channel, messages = [] }) => {
         <div className="flex items-center justify-between border-b border-neutral-800/70 px-6 py-5">
           <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Ask AI</p>
-              <h2 className="mt-1 text-xl font-semibold text-neutral-100">
-              Ask about {channel?.data?.name || channel?.name || channel?.id || "this channel"}
-            </h2>
+               <h2 className="mt-1 text-xl font-semibold text-neutral-100">
+               Ask about {isDM ? channelDisplayName : `#${channelDisplayName}`}
+             </h2>
           </div>
           <button
             onClick={onClose}

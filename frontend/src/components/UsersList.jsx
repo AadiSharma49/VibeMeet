@@ -9,19 +9,24 @@ const UsersList = ({ activeChannel, onSelectChannel }) => {
   const { client } = useChatContext();
 
   const fetchUsers = useCallback(async () => {
-    if (!client?.user) return;
-
-    const response = await client.queryUsers(
-      { id: { $ne: client.user.id } },
-      { name: 1 },
-      { limit: 20 }
-    );
-
-    const usersOnly = response.users.filter(
-      (user) => !user.id.startsWith("recording-") && user.allow_direct_messages !== false
-    );
-
-    return usersOnly;
+    try {
+      const response = await client.queryUsers(
+        { 
+          id: { $ne: client.userID },
+          name: { $ne: null }
+        },
+        { 
+          name: 1,
+          image: 1,
+          online: 1 
+        },
+        { limit: 20 }
+      );
+      return response.users.filter(u => u.id !== client.userID);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      return [];
+    }
   }, [client]);
 
   const {

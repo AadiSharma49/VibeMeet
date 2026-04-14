@@ -1,4 +1,4 @@
-const ChannelInsightsPanel = ({ insights, isLoading, onRefresh }) => {
+const ChannelInsightsPanel = ({ insights, isLoading, onRefresh, onToggle }) => {
   return (
     <div className="border-b border-neutral-800/50 bg-neutral-950/90 px-4 py-3">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -6,14 +6,23 @@ const ChannelInsightsPanel = ({ insights, isLoading, onRefresh }) => {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">AI Insights</p>
           <p className="mt-1 text-sm text-neutral-300">Decisions, action items, and risks from this channel</p>
         </div>
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100 disabled:opacity-60"
-        >
-          {isLoading ? "Refreshing..." : "Refresh"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100 disabled:opacity-60"
+          >
+            {isLoading ? "Refreshing..." : "Refresh"}
+          </button>
+          <button
+            type="button"
+            onClick={onToggle}
+            className="rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100"
+          >
+            Hide
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-3">

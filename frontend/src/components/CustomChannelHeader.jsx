@@ -1,4 +1,4 @@
-import { BotIcon, HashIcon, LockIcon, SparklesIcon, Trash2Icon, UsersIcon, PinIcon, VideoIcon, UserPlus2Icon, KeyRoundIcon } from "lucide-react";
+import { BotIcon, HashIcon, LockIcon, SparklesIcon, Trash2Icon, UsersIcon, PinIcon, VideoIcon, UserPlus2Icon, KeyRoundIcon, SearchIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
@@ -9,6 +9,8 @@ import InviteModal from "@/components/InviteModal";
 import AskAIModal from "@/components/AskAIModal";
 import CatchUpModal from "@/components/CatchUpModal";
 import ChannelPasscodeModal from "@/components/ChannelPasscodeModal";
+import UserSearchModal from "@/components/UserSearchModal";
+import PresenceSelector from "@/components/PresenceSelector";
 
 const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
   const { user } = useUser();
@@ -20,6 +22,8 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
   const [showAskAI, setShowAskAI] = useState(false);
   const [showCatchUp, setShowCatchUp] = useState(false);
   const [showPasscode, setShowPasscode] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [currentUserPresence, setCurrentUserPresence] = useState("online");
   
   if (!channel) return null;
 
@@ -31,7 +35,9 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
   );
 
   const isDM = memberCount === 2 && !channel.data?.name;
-  const isOwner = channel.data?.created_by_id === user?.id;
+  const createdById = channel.data?.created_by?.id || channel.data?.created_by_id || "";
+  const memberRole = channel.state?.members?.[user?.id]?.role || channel.state?.members?.[user?.id]?.channel_role || "";
+  const isOwner = createdById === user?.id || memberRole === "owner" || memberRole === "channel_owner";
 
   const handleShowPinned = async () => {
     const channelState = await channel.query();
@@ -89,10 +95,21 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
                 ? otherUser?.user?.name || otherUser?.user?.id
                 : channel.data?.name || channel.id}
             </span>
+
+            {!isDM && isOwner && (
+              <button
+                onClick={() => setShowPasscode(true)}
+                className="sm:hidden ml-2 inline-flex items-center gap-1 rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
+                title="View Join Passcode"
+              >
+                <KeyRoundIcon className="size-3.5" />
+                Passcode
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-w-[60vw] overflow-x-auto">
           <button
             onClick={() => setShowMembers(true)}
             className="flex items-center gap-2 px-2 py-1 rounded-lg 
@@ -106,7 +123,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           {!isDM && isOwner && (
             <button
               onClick={() => setShowPasscode(true)}
-              className="p-2 rounded-lg text-neutral-400 
+              className="hidden sm:inline-flex shrink-0 p-2 rounded-lg text-neutral-400 
                      hover:text-amber-300 hover:bg-neutral-800/60 
                      transition-all"
               title="View Join Passcode"
@@ -118,7 +135,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           {!isDM && (
             <button
               onClick={() => setShowInvite(true)}
-              className="p-2 rounded-lg text-neutral-400 
+              className="shrink-0 p-2 rounded-lg text-neutral-400 
                      hover:text-emerald-400 hover:bg-neutral-800/60 
                      transition-all"
               title="Invite Members"
@@ -130,7 +147,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           {!isDM && isOwner && (
             <button
               onClick={handleDeleteChannel}
-              className="rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-red-300"
+              className="shrink-0 rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-red-300"
               title="Delete Channel"
             >
               <Trash2Icon className="size-5" />
@@ -139,7 +156,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
 
           <button
             onClick={() => setShowAskAI(true)}
-            className="rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-violet-300"
+            className="shrink-0 rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-violet-300"
             title="Ask AI"
           >
             <BotIcon className="size-5" />
@@ -147,7 +164,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
 
           <button
             onClick={() => setShowCatchUp(true)}
-            className="rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-cyan-300"
+            className="shrink-0 rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-800/60 hover:text-cyan-300"
             title="Catch Up"
           >
             <SparklesIcon className="size-5" />
@@ -155,7 +172,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
 
           <button
             onClick={handleVideoCall}
-            className="p-2 rounded-lg text-neutral-400 
+            className="shrink-0 p-2 rounded-lg text-neutral-400 
                      hover:text-blue-400 hover:bg-neutral-800/60 
                      transition-all"
             title="Start Video Call"
@@ -164,13 +181,25 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           </button>
 
           <button
+            onClick={() => setShowSearch(true)}
+            className="shrink-0 p-2 rounded-lg text-neutral-400 
+                     hover:text-cyan-400 hover:bg-neutral-800/60 
+                     transition-all"
+            title="Search Users"
+          >
+            <SearchIcon className="size-5" />
+          </button>
+
+          <button
             onClick={handleShowPinned}
-            className="p-2 rounded-lg text-neutral-400 
+            className="shrink-0 p-2 rounded-lg text-neutral-400 
                      hover:text-yellow-400 hover:bg-neutral-800/60 
                      transition-all"
           >
             <PinIcon className="size-4" />
           </button>
+
+          <PresenceSelector currentStatus={currentUserPresence} />
         </div>
       </div>
       
@@ -189,7 +218,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
         <InviteModal channel={channel} onClose={() => setShowInvite(false)} />
       )}
 
-      {showPasscode && isOwner && (
+      {showPasscode && !isDM && isOwner && (
         <ChannelPasscodeModal channel={channel} onClose={() => setShowPasscode(false)} />
       )}
 
@@ -208,6 +237,18 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           onClose={() => setShowCatchUp(false)}
           channel={channel}
           messages={messages}
+        />
+      )}
+
+      {showSearch && (
+        <UserSearchModal
+          isOpen={showSearch}
+          onClose={() => setShowSearch(false)}
+          onSelectUser={(selectedChannel) => {
+            // Handle user selection - this would typically navigate to the DM
+            console.log("Selected user channel:", selectedChannel);
+            setShowSearch(false);
+          }}
         />
       )}
     </>

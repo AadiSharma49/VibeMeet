@@ -171,6 +171,11 @@ const CreateChannelModal = ({ isOpen, onClose, chatClient, setActiveChannel, set
       }
 
       const channel = chatClient.channel("messaging", channelId, channelData);
+      await channel.create();
+      
+      // ✅ CRITICAL FIX: Explicitly add creator as member (Stream does NOT do this automatically)
+      await channel.addMembers([chatClient.user.id, ...selectedMembers]);
+      
       await channel.watch();
 
       if (setActiveChannel) {

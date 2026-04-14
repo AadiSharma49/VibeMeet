@@ -166,9 +166,9 @@ const AccountPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 lg:flex-row">
-        <div className="w-full lg:w-[420px]">
+    <div className="min-h-screen min-h-[100dvh] bg-neutral-950 text-neutral-100 overflow-y-auto pb-20">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-3 py-6 lg:flex-row lg:px-4 lg:py-8 lg:gap-8">
+        <div className="w-full lg:w-[420px] flex-shrink-0">
           <div className="sticky top-8 overflow-hidden rounded-3xl border border-neutral-800/70 bg-linear-to-br from-neutral-900 via-neutral-950 to-black">
             <div className="border-b border-neutral-800/60 p-6">
               <Link
@@ -181,7 +181,7 @@ const AccountPage = () => {
             </div>
 
             <div className="p-6">
-              <div className="mb-6 flex items-center gap-4">
+              <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                 {user?.imageUrl ? (
                   <img
                     src={user.imageUrl}
@@ -267,7 +267,7 @@ const AccountPage = () => {
               </div>
             </div>
 
-            <div className="grid gap-6 p-6 md:grid-cols-2">
+            <div className="grid gap-4 p-4 md:grid-cols-2 md:p-6 md:gap-6">
               <label className="space-y-2 md:col-span-2">
                 <span className="text-sm font-medium text-neutral-300">Display Name</span>
                 <input
@@ -344,15 +344,15 @@ const AccountPage = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between border-t border-neutral-800/60 bg-neutral-950/50 px-6 py-4">
+            <div className="flex flex-col-reverse sm:flex-row items-center gap-3 sm:justify-between border-t border-neutral-800/60 bg-neutral-950/90 px-4 py-4 sm:px-6 sticky bottom-0 z-10 shadow-[0_-10px_25px_rgba(0,0,0,0.3)]">
               <p className="text-sm text-neutral-500">
                 Profile updates will be reflected in chat after save.
               </p>
-              <button
-                type="submit"
-                disabled={saveProfileMutation.isPending}
-                className="inline-flex items-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-semibold text-neutral-950 transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
+                <button
+                  type="submit"
+                  disabled={saveProfileMutation.isPending}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 text-sm font-semibold text-neutral-950 transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
                 {saveProfileMutation.isPending ? (
                   <LoaderCircle className="h-4 w-4 animate-spin" />
                 ) : (

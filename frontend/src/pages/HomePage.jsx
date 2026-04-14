@@ -180,11 +180,13 @@ const HomePage = () => {
   const [isInsightsLoading, setIsInsightsLoading] = useState(false)
   const [rewriteMode, setRewriteMode] = useState("clearer")
   const [isRewriting, setIsRewriting] = useState(false)
+  const [isInsightsPanelVisible, setIsInsightsPanelVisible] = useState(true)
   const [searchParams, setSearchParams] = useSearchParams()
   const { chatClient, error, isLoading } = useStreamChat()
   const activeChannelRef = useRef(null)
   const fileInputRef = useRef(null)
   const messageInputRef = useRef(null)
+  const chatContainerRef = useRef(null)
   const pendingAttachmentsRef = useRef([])
   const { data: currentUserProfile } = useQuery({
     queryKey: ["current-user-profile"],
@@ -200,6 +202,12 @@ const HomePage = () => {
 
     const nextMessages = [...(channel.state?.messages || [])].filter((message) => !message?.deleted_at)
     setMessages(nextMessages)
+
+    setTimeout(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      }
+    }, 50)
   }, [])
 
   const loadChannels = useCallback(async () => {
@@ -326,15 +334,17 @@ const HomePage = () => {
     }
 
     const selectedChannelId = searchParams.get("channel")
-    const nextChannel =
-      channels.find((channel) => channel.id === selectedChannelId) ||
-      channels.find((channel) => channel.id === activeChannelRef.current?.id) ||
-      channels[0]
+    
+    // Only set channel if it exists in user's channels
+    const nextChannel = selectedChannelId 
+      ? channels.find((channel) => channel.id === selectedChannelId)
+      : null
 
-    if (!nextChannel) return
-
-    if (searchParams.get("channel") !== nextChannel.id) {
-      setSearchParams({ channel: nextChannel.id }, { replace: true })
+    // Do NOT auto-select first channel, leave empty welcome screen
+    if (!nextChannel) {
+      setActiveChannel(null)
+      setSearchParams({}, { replace: true })
+      return
     }
 
     if (activeChannelRef.current?.id !== nextChannel.id) {
@@ -722,9 +732,9 @@ const HomePage = () => {
 
   return (
     <Chat client={chatClient}>
-      <div className="min-h-screen w-full bg-neutral-950 flex overflow-hidden">
+      <div className="h-screen w-full bg-neutral-950 flex flex-col lg:flex-row overflow-hidden">
         <div
-          className={`fixed lg:relative top-0 left-0 h-full w-64 bg-linear-to-b from-neutral-900 to-neutral-950 border-r border-neutral-800/50 flex flex-col transition-all duration-300 z-40 ${
+          className={`fixed lg:static top-0 left-0 h-full w-64 bg-linear-to-b from-neutral-900 to-neutral-950 border-r border-neutral-800/50 flex flex-col transition-all duration-300 z-40 ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
         >
@@ -828,8 +838,8 @@ const HomePage = () => {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col relative">
-          <div className="h-16 bg-linear-to-r from-neutral-900 to-neutral-950 border-b border-neutral-800/50 flex items-center justify-between px-4">
+        <div className="flex-1 flex flex-col relative min-h-0">
+          <div className="h-16 bg-linear-to-r from-neutral-900 to-neutral-950 border-b border-neutral-800/50 flex items-center justify-between px-4 shrink-0">
             <div className="flex items-center gap-4 min-w-0">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -855,18 +865,33 @@ const HomePage = () => {
 
           {activeChannel ? (
             <>
-              <CustomChannelHeader
-                channel={activeChannel}
-                messages={messages}
-                onChannelDeleted={handleChannelDeleted}
-              />
-              <ChannelInsightsPanel
-                insights={channelInsights}
-                isLoading={isInsightsLoading}
-                onRefresh={() => refreshInsights(activeChannel, messages)}
-              />
+              <div className="shrink-0">
+                <CustomChannelHeader
+                  channel={activeChannel}
+                  messages={messages}
+                  onChannelDeleted={handleChannelDeleted}
+                />
+                {isInsightsPanelVisible ? (
+                  <ChannelInsightsPanel
+                    insights={channelInsights}
+                    isLoading={isInsightsLoading}
+                    onRefresh={() => refreshInsights(activeChannel, messages)}
+                    onToggle={() => setIsInsightsPanelVisible(false)}
+                  />
+                ) : (
+                  <div className="border-b border-neutral-800/50 bg-neutral-950/90 px-4 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsInsightsPanelVisible(true)}
+                      className="w-full rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100"
+                    >
+                      Show AI Insights Panel
+                    </button>
+                  </div>
+                )}
+              </div>
 
-              <div className="flex-1 overflow-y-auto bg-neutral-950 p-4 space-y-4">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto bg-neutral-950 p-4 space-y-4 scroll-smooth min-h-0">
                 {messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-center">
                     <div>
@@ -1078,7 +1103,46 @@ const HomePage = () => {
                   })
                 )}
               </div>
-              <div className="relative min-h-20 bg-neutral-900/50 border-t border-neutral-800/50 p-4">
+
+              <div className="shrink-0 bg-neutral-900/50 border-t border-neutral-800/50 p-4">
+                {pendingAttachments.length > 0 && (
+                  <div className="mb-3">
+                    <div className="flex flex-wrap gap-3">
+                      {pendingAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="relative flex min-w-40 max-w-56 items-center gap-3 rounded-2xl border border-neutral-800/70 bg-neutral-900/80 px-3 py-3"
+                        >
+                          {attachment.previewUrl ? (
+                            <img
+                              src={attachment.previewUrl}
+                              alt={attachment.file.name}
+                              className="h-12 w-12 rounded-xl object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-800 text-neutral-300">
+                              {isImageFile(attachment.file) ? <ImageIcon size={18} /> : <FileText size={18} />}
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-neutral-100">{attachment.file.name}</p>
+                            <p className="text-xs text-neutral-500">{formatFileSize(attachment.file.size)}</p>
+                          </div>
+
+                          <button
+                            onClick={() => removePendingAttachment(attachment.id)}
+                            className="absolute right-2 top-2 rounded-full p-1 text-neutral-500 transition-colors hover:text-red-400 cursor-pointer"
+                            title="Remove attachment"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {replyTarget && (
                   <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-neutral-800/70 bg-neutral-950/70 px-4 py-3">
                     <div className="min-w-0">
@@ -1217,53 +1281,16 @@ const HomePage = () => {
                   </button>
                 </div>
               </div>
-
-              {pendingAttachments.length > 0 && (
-                <div className="border-t border-neutral-800/50 bg-neutral-950/80 px-4 py-3">
-                  <div className="flex flex-wrap gap-3">
-                    {pendingAttachments.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className="relative flex min-w-40 max-w-56 items-center gap-3 rounded-2xl border border-neutral-800/70 bg-neutral-900/80 px-3 py-3"
-                      >
-                        {attachment.previewUrl ? (
-                          <img
-                            src={attachment.previewUrl}
-                            alt={attachment.file.name}
-                            className="h-12 w-12 rounded-xl object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-800 text-neutral-300">
-                            {isImageFile(attachment.file) ? <ImageIcon size={18} /> : <FileText size={18} />}
-                          </div>
-                        )}
-
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-neutral-100">{attachment.file.name}</p>
-                          <p className="text-xs text-neutral-500">{formatFileSize(attachment.file.size)}</p>
-                        </div>
-
-                        <button
-                          onClick={() => removePendingAttachment(attachment.id)}
-                          className="absolute right-2 top-2 rounded-full p-1 text-neutral-500 transition-colors hover:text-red-400 cursor-pointer"
-                          title="Remove attachment"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           ) : (
             <div className="flex-1 overflow-y-auto bg-neutral-950 p-4">
-              <div className="h-full flex items-center justify-center text-center">
-                <div>
-                  <p className="text-neutral-100 text-lg font-semibold">Welcome to VibeMeet</p>
-                  <p className="text-neutral-400 text-base mt-2">Select a channel to start messaging</p>
-                </div>
-              </div>
+                  <div className="h-full flex items-center justify-center text-center">
+                    <div>
+                      <p className="text-neutral-100 text-lg font-semibold">Welcome to VibeMeet</p>
+                      <p className="text-neutral-400 text-base mt-2">Add your friends and vibe with them</p>
+                      <p className="text-neutral-500 text-sm mt-2">Select a channel to start messaging</p>
+                    </div>
+                  </div>
             </div>
           )}
         </div>
@@ -1271,6 +1298,7 @@ const HomePage = () => {
         <style>{`
           * {
             transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-sizing: border-box;
           }
 
           @keyframes pulse {
@@ -1291,22 +1319,50 @@ const HomePage = () => {
             to { transform: rotate(360deg); }
           }
 
+          html, body, #root {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+          }
+
+          body {
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(115, 115, 115, 0.5) rgba(23, 23, 23, 0.5);
+          }
+
           ::-webkit-scrollbar {
-            width: 8px;
+            width: 12px;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 99999;
           }
 
           ::-webkit-scrollbar-track {
-            background: rgba(23, 23, 23, 0.5);
-            border-radius: 10px;
+            background: rgba(10, 10, 10, 0.95);
+            margin: 0;
           }
 
           ::-webkit-scrollbar-thumb {
-            background: rgba(115, 115, 115, 0.5);
-            border-radius: 10px;
+            background: rgba(82, 82, 82, 0.6);
+            border-radius: 6px;
+            border: 3px solid rgba(10, 10, 10, 0.95);
           }
 
           ::-webkit-scrollbar-thumb:hover {
-            background: rgba(115, 115, 115, 0.7);
+            background: rgba(115, 115, 115, 0.8);
+          }
+
+          ::-webkit-scrollbar-thumb:active {
+            background: rgba(163, 163, 163, 0.9);
+          }
+
+          .scroll-smooth {
+            scroll-behavior: smooth;
           }
         `}</style>
 

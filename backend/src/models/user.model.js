@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    presenceStatus: {
+        type: String,
+        enum: ['online', 'dnd', 'sleep', 'invisible'],
+        default: 'online',
+    },
     clerkId:{
         type:String,
         required:true,

@@ -891,7 +891,7 @@ const HomePage = () => {
                 )}
               </div>
 
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto bg-neutral-950 p-4 space-y-4 scroll-smooth min-h-0">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto bg-neutral-950 p-3 sm:p-4 space-y-4 scroll-smooth min-h-0 pb-[max(80px,env(keyboard-inset-height,80px),env(safe-area-inset-bottom,0px))]">
                 {messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-center">
                     <div>
@@ -1104,7 +1104,7 @@ const HomePage = () => {
                 )}
               </div>
 
-              <div className="shrink-0 bg-neutral-900/50 border-t border-neutral-800/50 p-4">
+  <div className="shrink-0 bg-neutral-900/50 border-t border-neutral-800/50 p-3 sm:p-4 sticky bottom-0 left-0 right-0 z-50">
                 {pendingAttachments.length > 0 && (
                   <div className="mb-3">
                     <div className="flex flex-wrap gap-3">
@@ -1239,7 +1239,7 @@ const HomePage = () => {
                   </div>
                 )}
 
-  <div className="flex items-center gap-2 pb-[env(keyboard-inset-height,0px)]">
+  <div className="flex items-center gap-2">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -1355,8 +1355,7 @@ const HomePage = () => {
           ::-webkit-scrollbar-thumb {
             background: rgba(82, 82, 82, 0.6);
             border-radius: 6px;
-            border: 3px solid rgba(10, 10, 10, 0.95);
-          }
+            border: 3px solid rgba(10, 10, 10, 0.95);          }
 
           ::-webkit-scrollbar-thumb:hover {
             background: rgba(115, 115, 115, 0.8);

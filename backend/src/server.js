@@ -19,16 +19,16 @@ const allowedOrigins = new Set(
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://vibe-meet-frontend.vercel.app/",
+        "https://vibe-meet-frontend.vercel.app",
     ]
-        .map((origin) => origin?.trim())
+        .map((origin) => origin?.trim().replace(/\/$/, ""))
         .filter(Boolean)
 );
 
 // Vercel Production CORS Headers
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigin = allowedOrigins.has(origin) ? origin : ENV.CLIENT_URL;
+  const origin = req.headers.origin ? req.headers.origin.replace(/\/$/, "") : undefined;
+  const allowedOrigin = allowedOrigins.has(origin) ? origin : ENV.CLIENT_URL.replace(/\/$/, "");
   
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');

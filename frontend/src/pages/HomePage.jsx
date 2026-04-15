@@ -1239,47 +1239,52 @@ const HomePage = () => {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    onChange={handleAttachmentPick}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="shrink-0 rounded-lg border border-neutral-700/50 bg-neutral-800/50 p-2 text-neutral-300 transition-all duration-200 hover:border-neutral-600 hover:text-neutral-100 cursor-pointer"
-                    title="Attach files"
-                  >
-                    <Paperclip size={18} />
-                  </button>
-                  <input
-                    ref={messageInputRef}
-                    type="text"
-                    value={messageText}
-                    onChange={(event) => setMessageText(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault()
-                        handleSendMessage()
+  <div className="flex items-center gap-2 pb-[env(keyboard-inset-height,0px)]">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleAttachmentPick}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="shrink-0 rounded-lg border border-neutral-700/50 bg-neutral-800/50 p-2 text-neutral-300 transition-all duration-200 hover:border-neutral-600 hover:text-neutral-100 cursor-pointer"
+                      title="Attach files"
+                    >
+                      <Paperclip size={18} />
+                    </button>
+                    <input
+                      ref={messageInputRef}
+                      type="text"
+                      value={messageText}
+                      onChange={(event) => setMessageText(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
+                      placeholder={
+                        isDirectMessageChannel(activeChannel)
+                          ? `Message ${activeChannelName}`
+                          : `Message #${activeChannelName}`
                       }
-                    }}
-                    placeholder={
-                      isDirectMessageChannel(activeChannel)
-                        ? `Message ${activeChannelName}`
-                        : `Message #${activeChannelName}`
-                    }
-                    className="flex-1 bg-neutral-800/50 border border-neutral-700/50 rounded-lg px-4 py-2 text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 focus:ring-1 focus:ring-neutral-700/50 transition-all duration-200"
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={(!messageText.trim() && pendingAttachments.length === 0) || isSending}
-                    className="bg-neutral-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 rounded-lg p-2 transition-all duration-300 transform hover:scale-110 active:scale-95 cursor-pointer"
-                  >
-                    <Send size={20} />
-                  </button>
-                </div>
+                      className="flex-1 bg-neutral-800/50 border border-neutral-700/50 rounded-lg px-4 py-3 text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 focus:ring-1 focus:ring-neutral-700/50 transition-all duration-200"
+                      style={{
+                        fontSize: '16px',
+                        minHeight: '48px',
+                        WebkitAppearance: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={(!messageText.trim() && pendingAttachments.length === 0) || isSending}
+                      className="bg-neutral-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 rounded-lg p-3 transition-all duration-300 transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0"
+                    >
+                      <Send size={20} />
+                    </button>
+                  </div>
               </div>
             </>
           ) : (

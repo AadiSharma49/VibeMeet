@@ -25,21 +25,23 @@ const allowedOrigins = new Set(
         .filter(Boolean)
 );
 
-// CORS Headers
+// Vercel Production CORS Headers
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  const allowedOrigin = allowedOrigins.has(origin) ? origin : ENV.CLIENT_URL;
   
-  if (!origin || allowedOrigins.has(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  }
-  
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Clerk-Auth-Status, X-Clerk-User-Id');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Clerk-Auth-Status, X-Clerk-User-Id, X-Clerk-JWT');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
   res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
+    res.statusCode = 204;
+    res.setHeader('Content-Length', '0');
+    return res.end();
   }
 
   next();

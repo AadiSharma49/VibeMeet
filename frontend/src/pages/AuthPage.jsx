@@ -35,7 +35,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-neutral-950 relative overflow-hidden">
+    <div className="min-h-screen min-h-[100dvh] w-full bg-neutral-950 relative overflow-y-auto overflow-x-hidden">
       {/* Animated Moving Lines Background */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Horizontal Lines */}
@@ -146,10 +146,10 @@ export default function AuthPage() {
         </div>
       )}
 
-      <div className="relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0">
+      <div className="relative z-10 min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2 gap-0">
         
         {/* LEFT – HERO SECTION */}
-        <div className="flex items-center justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-12">
+        <div className="flex items-center justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-12 min-h-[100dvh] lg:min-h-auto">
           <div className="w-full max-w-md">
             
             {/* Logo */}

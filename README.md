@@ -1,6 +1,6 @@
 # VibeMeet
 
-Real time chat application with AI powered insights.
+VibeMeet, a real-time collaboration platform with AI-powered features designed to improve how teams communicate and make decisions.
 
 ## Features
 

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
-import { ArrowLeft, Copy, Loader2, Sparkles, VideoIcon } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Copy, LayoutGrid, Loader2, Monitor, Sparkles, VideoIcon } from "lucide-react";
 import {
   CallControls,
   CallingState,
+  PaginatedGridLayout,
   SpeakerLayout,
   StreamCall,
   StreamTheme,
@@ -17,7 +18,7 @@ import "@stream-io/video-react-sdk/dist/css/styles.css";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
-const CallRoom = ({ callId, onLeave }) => {
+const CallRoom = ({ callId, onLeave, layoutMode }) => {
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
 
@@ -35,7 +36,7 @@ const CallRoom = ({ callId, onLeave }) => {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-neutral-800/70 bg-black/50">
-        <SpeakerLayout />
+        {layoutMode === "grid" ? <PaginatedGridLayout /> : <SpeakerLayout />}
       </div>
       <div className="mt-3 rounded-2xl border border-neutral-800/70 bg-neutral-900/80 px-2 py-2 sm:mt-4 sm:px-3 sm:py-3">
         <CallControls onLeave={onLeave} />
@@ -58,6 +59,8 @@ const CallPage = () => {
   const [notes, setNotes] = useState("");
   const [recap, setRecap] = useState(null);
   const [isGeneratingRecap, setIsGeneratingRecap] = useState(false);
+  const [layoutMode, setLayoutMode] = useState("speaker");
+  const [isRecapFirst, setIsRecapFirst] = useState(false);
 
   const cleanupClient = async () => {
     const existingCall = callRef.current;
@@ -230,10 +233,46 @@ const CallPage = () => {
             </div>
 
             <div className="min-h-0 flex-1 p-2 sm:p-3 md:p-5">
-              <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-                <CallRoom callId={callId} onLeave={handleLeave} />
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-neutral-800/70 bg-neutral-900/70 px-3 py-2">
+                <div className="inline-flex items-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-2 py-1">
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode("speaker")}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition ${
+                      layoutMode === "speaker" ? "bg-neutral-100 text-neutral-950" : "text-neutral-300 hover:text-neutral-100"
+                    }`}
+                  >
+                    <Monitor size={14} />
+                    Speaker
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode("grid")}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition ${
+                      layoutMode === "grid" ? "bg-neutral-100 text-neutral-950" : "text-neutral-300 hover:text-neutral-100"
+                    }`}
+                  >
+                    <LayoutGrid size={14} />
+                    Grid
+                  </button>
+                </div>
 
-                <div className="flex min-h-0 flex-col gap-4">
+                <button
+                  type="button"
+                  onClick={() => setIsRecapFirst((current) => !current)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-xs font-semibold text-neutral-300 transition hover:border-neutral-700 hover:text-neutral-100"
+                >
+                  <ArrowDownUp size={14} />
+                  Move Recap {isRecapFirst ? "Down" : "Up"}
+                </button>
+              </div>
+
+              <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+                <div className={isRecapFirst ? "order-2 xl:order-1" : "order-1"}>
+                  <CallRoom callId={callId} onLeave={handleLeave} layoutMode={layoutMode} />
+                </div>
+
+                <div className={`flex min-h-0 flex-col gap-4 ${isRecapFirst ? "order-1 xl:order-2" : "order-2"}`}>
                   <div className="rounded-3xl border border-neutral-800/70 bg-neutral-900/80 p-4">
                     <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
                       <Sparkles size={14} />

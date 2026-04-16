@@ -13,6 +13,6 @@ export const ENV = {
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    CLIENT_URL: process.env.CLIENT_URL,
-    CLIENT_URLS: process.env.CLIENT_URLS,
+    CLIENT_URL: process.env.CLIENT_URL || "",
+    CLIENT_URLS: process.env.CLIENT_URLS || "",
 }

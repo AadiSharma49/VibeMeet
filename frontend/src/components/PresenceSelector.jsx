@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useUser } from "@clerk/clerk-react";
 import { MoreVertical, Circle, Moon, Eye, EyeOff } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updatePresenceStatus } from "@/lib/api";
@@ -14,7 +13,6 @@ const presenceOptions = [
 
 const PresenceSelector = ({ currentStatus = "online" }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useUser();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -33,8 +31,6 @@ const PresenceSelector = ({ currentStatus = "online" }) => {
   });
 
   const currentOption = presenceOptions.find(o => o.value === currentStatus) || presenceOptions[0];
-  const CurrentIcon = currentOption.icon;
-
   const handleStatusChange = (newStatus) => {
     if (newStatus === currentStatus) {
       setIsOpen(false);
@@ -64,7 +60,6 @@ const PresenceSelector = ({ currentStatus = "online" }) => {
           <div className="absolute bottom-full left-0 mb-2 w-48 rounded-2xl border border-neutral-800 bg-neutral-900 shadow-2xl z-50 overflow-hidden">
             <div className="p-2">
               {presenceOptions.map((option) => {
-                const Icon = option.icon;
                 const isSelected = option.value === currentStatus;
                 
                 return (

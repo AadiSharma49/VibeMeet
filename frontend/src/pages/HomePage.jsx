@@ -262,6 +262,15 @@ const HomePage = () => {
     }
   }, [messages])
 
+  const markChannelAsRead = useCallback(async (channelToMark) => {
+    if (!channelToMark?.markRead) return
+    try {
+      await channelToMark.markRead()
+    } catch (markReadError) {
+      console.error("Failed to mark channel as read:", markReadError)
+    }
+  }, [])
+
   const handleRewriteMessage = async (mode) => {
     if (!messageText.trim() || !activeChannel || isRewriting) return
 
@@ -368,6 +377,7 @@ const HomePage = () => {
         await activeChannel.watch()
         if (isMounted) {
           syncMessages(activeChannel)
+          await markChannelAsRead(activeChannel)
         }
       } catch (channelError) {
         console.error("Failed to watch active channel:", channelError)
@@ -384,6 +394,7 @@ const HomePage = () => {
         event.type === "message.undeleted"
       ) {
         syncMessages(activeChannel)
+        markChannelAsRead(activeChannel)
       }
     })
 
@@ -391,7 +402,7 @@ const HomePage = () => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [activeChannel, syncMessages])
+  }, [activeChannel, markChannelAsRead, syncMessages])
 
   useEffect(() => {
     if (!activeChannel) return
@@ -404,7 +415,24 @@ const HomePage = () => {
     setSearchParams({ channel: channel.id })
     setIsSidebarOpen(false)
     setReplyTarget(null)
+    markChannelAsRead(channel)
   }
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && activeChannelRef.current) {
+        markChannelAsRead(activeChannelRef.current)
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    window.addEventListener("focus", handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("focus", handleVisibilityChange)
+    }
+  }, [markChannelAsRead])
 
   const handleChannelDeleted = async (deletedChannel) => {
     const nextChannels = channels.filter((channel) => channel.id !== deletedChannel.id)
@@ -732,7 +760,7 @@ const HomePage = () => {
 
   return (
     <Chat client={chatClient}>
-      <div className="h-screen w-full bg-neutral-950 flex flex-col lg:flex-row overflow-hidden">
+      <div className="h-[100dvh] w-full bg-neutral-950 flex flex-col lg:flex-row overflow-hidden">
         <div
           className={`fixed lg:static top-0 left-0 h-full w-64 bg-linear-to-b from-neutral-900 to-neutral-950 border-r border-neutral-800/50 flex flex-col transition-all duration-300 z-40 ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -1104,7 +1132,7 @@ const HomePage = () => {
                 )}
               </div>
 
-  <div className="shrink-0 bg-neutral-900/50 border-t border-neutral-800/50 p-3 sm:p-4 sticky bottom-0 left-0 right-0 z-50">
+  <div className="shrink-0 bg-neutral-900/50 border-t border-neutral-800/50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:p-4 sticky bottom-0 left-0 right-0 z-30">
                 {pendingAttachments.length > 0 && (
                   <div className="mb-3">
                     <div className="flex flex-wrap gap-3">
@@ -1324,27 +1352,8 @@ const HomePage = () => {
             to { transform: rotate(360deg); }
           }
 
-          html, body, #root {
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-          }
-
-          body {
-            overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(115, 115, 115, 0.5) rgba(23, 23, 23, 0.5);
-          }
-
           ::-webkit-scrollbar {
             width: 12px;
-            position: fixed;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 99999;
           }
 
           ::-webkit-scrollbar-track {

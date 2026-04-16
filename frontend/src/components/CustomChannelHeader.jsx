@@ -1,4 +1,4 @@
-import { BotIcon, HashIcon, LockIcon, SparklesIcon, Trash2Icon, UsersIcon, PinIcon, VideoIcon, UserPlus2Icon, KeyRoundIcon, SearchIcon } from "lucide-react";
+import { BotIcon, HashIcon, LockIcon, SparklesIcon, Trash2Icon, UsersIcon, PinIcon, VideoIcon, UserPlus2Icon, KeyRoundIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
@@ -9,7 +9,6 @@ import InviteModal from "@/components/InviteModal";
 import AskAIModal from "@/components/AskAIModal";
 import CatchUpModal from "@/components/CatchUpModal";
 import ChannelPasscodeModal from "@/components/ChannelPasscodeModal";
-import UserSearchModal from "@/components/UserSearchModal";
 import PresenceSelector from "@/components/PresenceSelector";
 
 const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
@@ -22,8 +21,7 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
   const [showAskAI, setShowAskAI] = useState(false);
   const [showCatchUp, setShowCatchUp] = useState(false);
   const [showPasscode, setShowPasscode] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [currentUserPresence, setCurrentUserPresence] = useState("online");
+  const [currentUserPresence] = useState("online");
   
   if (!channel) return null;
 
@@ -181,16 +179,6 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           </button>
 
           <button
-            onClick={() => setShowSearch(true)}
-            className="shrink-0 p-2 rounded-lg text-neutral-400 
-                     hover:text-cyan-400 hover:bg-neutral-800/60 
-                     transition-all"
-            title="Search Users"
-          >
-            <SearchIcon className="size-5" />
-          </button>
-
-          <button
             onClick={handleShowPinned}
             className="shrink-0 p-2 rounded-lg text-neutral-400 
                      hover:text-yellow-400 hover:bg-neutral-800/60 
@@ -237,18 +225,6 @@ const CustomChannelHeader = ({ channel, messages = [], onChannelDeleted }) => {
           onClose={() => setShowCatchUp(false)}
           channel={channel}
           messages={messages}
-        />
-      )}
-
-      {showSearch && (
-        <UserSearchModal
-          isOpen={showSearch}
-          onClose={() => setShowSearch(false)}
-          onSelectUser={(selectedChannel) => {
-            // Handle user selection - this would typically navigate to the DM
-            console.log("Selected user channel:", selectedChannel);
-            setShowSearch(false);
-          }}
         />
       )}
     </>

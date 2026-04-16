@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useChatContext } from "stream-chat-react";
+import toast from "react-hot-toast";
 
 import * as Sentry from "@sentry/react";
 import { CircleIcon } from "lucide-react";
@@ -20,9 +21,11 @@ const UsersList = ({ activeChannel, onSelectChannel }) => {
           image: 1,
           online: 1 
         },
-        { limit: 20 }
+        { limit: 40, presence: true }
       );
-      return response.users.filter(u => u.id !== client.userID);
+      return response.users.filter((foundUser) => (
+        foundUser.id !== client.userID && foundUser.allow_direct_messages !== false
+      ));
     } catch (error) {
       console.error("Failed to fetch users:", error);
       return [];
@@ -40,15 +43,57 @@ const UsersList = ({ activeChannel, onSelectChannel }) => {
     staleTime: 1000 * 60 * 5,
   });
 
+  const fetchDirectChannels = useCallback(async () => {
+    if (!client?.user?.id) return [];
+    try {
+      return await client.queryChannels(
+        {
+          type: "messaging",
+          members: { $in: [client.user.id] },
+        },
+        { last_message_at: -1 },
+        { watch: true, state: true, limit: 100 }
+      );
+    } catch (error) {
+      console.error("Failed to fetch DM channels:", error);
+      return [];
+    }
+  }, [client]);
+
+  const { data: dmChannels = [] } = useQuery({
+    queryKey: ["users-dm-channels", client?.user?.id],
+    queryFn: fetchDirectChannels,
+    enabled: !!client?.user,
+    staleTime: 1000 * 15,
+    refetchInterval: 1000 * 20,
+  });
+
+  const dmChannelByUserId = useMemo(() => {
+    const map = new Map();
+    dmChannels.forEach((channel) => {
+      const members = Object.keys(channel.state?.members || {});
+      if (members.length !== 2 || channel.data?.name) return;
+      const otherUserId = members.find((memberId) => memberId !== client?.user?.id);
+      if (!otherUserId || map.has(otherUserId)) return;
+      map.set(otherUserId, channel);
+    });
+    return map;
+  }, [client?.user?.id, dmChannels]);
+
   const startDirectMessage = async (targetUser) => {
     if (!targetUser || !client?.user) return;
+    if (targetUser.allow_direct_messages === false) {
+      toast.error(`${targetUser.name || "This user"} is not accepting direct messages right now.`);
+      return;
+    }
 
     try {
-      const channelId = [client.user.id, targetUser.id].sort().join("-").slice(0, 64);
-      const channel = client.channel("messaging", channelId, {
+      const existingChannel = dmChannelByUserId.get(targetUser.id);
+      const channel = existingChannel || client.channel("messaging", undefined, {
         members: [client.user.id, targetUser.id],
       });
       await channel.watch();
+      await channel.markRead();
       if (onSelectChannel) {
         onSelectChannel(channel);
       }
@@ -71,12 +116,9 @@ const UsersList = ({ activeChannel, onSelectChannel }) => {
   return (
     <div className="space-y-1">
       {users.map((user) => {
-        const channelId = [client.user.id, user.id].sort().join("-").slice(0, 64);
-        const channel = client.channel("messaging", channelId, {
-          members: [client.user.id, user.id],
-        });
-        const unreadCount = channel.countUnread();
-        const isActive = activeChannel && activeChannel.id === channelId;
+        const channel = dmChannelByUserId.get(user.id);
+        const unreadCount = channel?.countUnread?.() || 0;
+        const isActive = activeChannel && activeChannel.id === channel?.id;
 
         return (
           <button

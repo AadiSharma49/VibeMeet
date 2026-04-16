@@ -26,11 +26,6 @@ export async function updatePresenceStatus(presenceStatus) {
     return response.data;
 }
 
-export async function searchUsers(query) {
-    const response = await axiosInstance.get(`/users/search?q=${encodeURIComponent(query)}`);
-    return response.data;
-}
-
 export async function getChannelNameSuggestions(payload) {
     const response = await axiosInstance.post("/ai/channel-suggestions", payload);
     return response.data;

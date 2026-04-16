@@ -25,25 +25,49 @@ const allowedOrigins = new Set(
         .filter(Boolean)
 );
 
-// Vercel Production CORS Headers
+const vercelPreviewRegex = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+const defaultOrigin = "https://vibe-meet-frontend.vercel.app";
+
+const isAllowedOrigin = (origin = "") => {
+  if (!origin) return false;
+  const normalizedOrigin = origin.replace(/\/$/, "");
+  return allowedOrigins.has(normalizedOrigin) || vercelPreviewRegex.test(normalizedOrigin);
+};
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    const normalizedOrigin = origin.replace(/\/$/, "");
+    if (isAllowedOrigin(normalizedOrigin)) {
+      return callback(null, normalizedOrigin);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Clerk-Auth-Status",
+    "X-Clerk-User-Id",
+    "X-Clerk-JWT",
+  ],
+  optionsSuccessStatus: 204,
+}));
+
 app.use((req, res, next) => {
-  const origin = req.headers.origin ? req.headers.origin.replace(/\/$/, "") : undefined;
-  const allowedOrigin = allowedOrigins.has(origin) ? origin : ENV.CLIENT_URL.replace(/\/$/, "");
-  
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Clerk-Auth-Status, X-Clerk-User-Id, X-Clerk-JWT');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  res.setHeader('Vary', 'Origin');
+  const origin = req.headers.origin;
+  if (!origin) return next();
 
-  if (req.method === 'OPTIONS') {
-    res.statusCode = 204;
-    res.setHeader('Content-Length', '0');
-    return res.end();
+  const normalizedOrigin = origin.replace(/\/$/, "");
+  if (isAllowedOrigin(normalizedOrigin)) {
+    res.setHeader("Access-Control-Allow-Origin", normalizedOrigin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", defaultOrigin);
   }
-
+  res.setHeader("Vary", "Origin");
   next();
 });
 
